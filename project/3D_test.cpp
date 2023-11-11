@@ -1,169 +1,279 @@
-#include <omp.h>
-#include <cmath>
-#include <algorithm>
 #include <stdio.h>
-#include <stdlib.h>
-#include "my_timer.h"
+#include <time.h>
+#include <assert.h>
+#include <stdlib.h> 
+#include <math.h> 
+#include <sys/time.h>
+#include <string.h>
 
-#include "mm.h"
+#include "3D.h"
 
-#define NI 32
-#define NJ 32
-#define NK 32
-#define buff_size 16
+#define STR_SIZE (256)
+#define MAX_PD	(3.0e6)
+/* required precision in degrees	*/
+#define PRECISION	0.001
+#define SPEC_HEAT_SI 1.75e6
+#define K_SI 100
+/* capacitance fitting factor	*/
+#define FACTOR_CHIP	0.5
 
-/* Array initialization. */
-static
-void init_array(float C[NI*NJ], float A[NI*NK], float B[NK*NJ])
+
+/* chip parameters	*/
+float t_chip = 0.0005;
+float chip_height = 0.016; float chip_width = 0.016; 
+/* ambient temperature, assuming no package at all	*/
+float amb_temp = 80.0;
+
+void fatal(char *s)
 {
-  int i, j;
-
-  for (i = 0; i < NI; i++)
-    for (j = 0; j < NJ; j++)
-      C[i*NJ+j] = (float)((i*j+1) % NI) / NI;
-  for (i = 0; i < NI; i++)
-    for (j = 0; j < NK; j++)
-      A[i*NK+j] = (float)(i*(j+1) % NK) / NK;
-  for (i = 0; i < NK; i++)
-    for (j = 0; j < NJ; j++)
-      B[i*NJ+j] = (float)(i*(j+2) % NJ) / NJ;
+    fprintf(stderr, "Error: %s\n", s);
 }
 
-/* DCE code. Must scan the entire live-out data.
-   Can be used also to check the correctness of the output. */
-static
-void print_array(float C[NI*NJ])
-{
-  int i, j;
+void readinput(float *vect, int grid_rows, int grid_cols, int layers, char *file) {
+    int i,j,k;
+    FILE *fp;
+    char str[STR_SIZE];
+    float val;
 
-  for (i = 0; i < NI; i++)
-    for (j = 0; j < NJ; j++)
-      printf("C[%d][%d] = %f\n", i, j, C[i*NJ+j]);
-}
-
-/* DCE code. Must scan the entire live-out data.
-   Can be used also to check the correctness of the output. */
-static
-void print_array_sum(float C[NI*NJ])
-{
-  int i, j;
-
-  float sum = 0.0;
-  
-  for (i = 0; i < NI; i++)
-    for (j = 0; j < NJ; j++)
-      sum += C[i*NJ+j];
-
-  printf("sum of C array = %f\n", sum);
-}
-
-/* Main computational kernel. The whole function will be timed,
-   including the call and return. */
-static
-void kernel_gemm(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float alpha, float beta)
-{
-  int i, j, k; // used for the three outer loops
-  int ii, jj, kk; // used for the three inner loops
-  int N, b; // b is the block size
-  b = 32;
-  N = ceil(NI*1.0/b); // we can use NI=NJ=NK
-
-  printf("Block size = %d elements\n", b);
-
-// => Form C := alpha*A*B + beta*C,
-//A is NIxNK
-//B is NKxNJ
-//C is NIxNJ
+    if( (fp  = fopen(file, "r" )) ==0 )
+      fatal( "The file was not opened" );
 
 
-  #pragma omp parallel for private(i, j, ii, jj) collapse(2) num_threads(10)
-  for (i = 0; i < N; i++) {
-    for (j = 0; j < N; j++) {
-      for (ii = 0; ii < std::min(b,NI-i*b); ii++){ // we add the min() incase the last block has less than bxb elements
-        #pragma omp simd
-        for (jj = 0; jj < std::min(b,NJ-j*b); jj++){
-          C[(i*b+ii)*NI+(j*b+jj)] *= beta; // Since it is a 1D array we have to do some calculations to ensure proper indexing 
-        }
-      }
-    }
-  }
-
-  #pragma omp parallel for private(i, j, k, ii, jj, kk) num_threads(10)
-  for (i = 0; i < N; i++) {
-    for (k = 0; k < N; k++) {
-      for (j = 0; j < N; j++) {
-        for (ii = 0; ii < std::min(b,NI-i*b); ii++){
-          for (kk = 0; kk < std::min(b,NK-k*b); kk++){
-            #pragma omp simd
-            for (jj = 0; jj < std::min(b,NJ-j*b); jj++){
-              C[(i*b+ii)*NI+(j*b+jj)] += alpha * A[(i*b+ii)*NI+(k*b+kk)] * B[(k*b+kk)*NK+(j*b+jj)];
-            }
+    for (i=0; i <= grid_rows-1; i++) 
+      for (j=0; j <= grid_cols-1; j++)
+        for (k=0; k <= layers-1; k++)
+          {
+            if (fgets(str, STR_SIZE, fp) == NULL) fatal("Error reading file\n");
+            if (feof(fp))
+              fatal("not enough lines in file");
+            if ((sscanf(str, "%f", &val) != 1))
+              fatal("invalid file format");
+            vect[i*grid_cols+j+k*grid_rows*grid_cols] = val;
           }
-        }
-      }
-    }
-  }
+
+    fclose(fp);	
+
 }
+
+
+void writeoutput(float *vect, int grid_rows, int grid_cols, int layers, char *file) {
+
+    int i,j,k, index=0;
+    FILE *fp;
+    char str[STR_SIZE];
+
+    if( (fp = fopen(file, "w" )) == 0 )
+      printf( "The file was not opened\n" );
+
+    for (i=0; i < grid_rows; i++) 
+      for (j=0; j < grid_cols; j++)
+        for (k=0; k < layers; k++)
+          {
+            sprintf(str, "%d\t%g\n", index, vect[i*grid_cols+j+k*grid_rows*grid_cols]);
+            fputs(str,fp);
+            index++;
+          }
+
+    fclose(fp);	
+}
+
+
+
+void computeTempCPU(float *pIn, float* tIn, float *tOut, 
+        int nx, int ny, int nz, float Cap, 
+        float Rx, float Ry, float Rz, 
+        float dt, int numiter) 
+{   float ce, cw, cn, cs, ct, cb, cc;
+    float stepDivCap = dt / Cap;
+    ce = cw =stepDivCap/ Rx;
+    cn = cs =stepDivCap/ Ry;
+    ct = cb =stepDivCap/ Rz;
+
+    cc = 1.0 - (2.0*ce + 2.0*cn + 3.0*ct);
+
+    int c,w,e,n,s,b,t;
+    int x,y,z;
+    int i = 0;
+    do{
+        for(z = 0; z < nz; z++)
+            for(y = 0; y < ny; y++)
+                for(x = 0; x < nx; x++)
+                {
+                    c = x + y * nx + z * nx * ny;
+
+                    w = (x == 0) ? c      : c - 1;
+                    e = (x == nx - 1) ? c : c + 1;
+                    n = (y == 0) ? c      : c - nx;
+                    s = (y == ny - 1) ? c : c + nx;
+                    b = (z == 0) ? c      : c - nx * ny;
+                    t = (z == nz - 1) ? c : c + nx * ny;
+
+
+                    tOut[c] = tIn[c]*cc + tIn[n]*cn + tIn[s]*cs + tIn[e]*ce + tIn[w]*cw + tIn[t]*ct + tIn[b]*cb + (dt/Cap) * pIn[c] + ct*amb_temp;
+                }
+        float *temp = tIn;
+        tIn = tOut;
+        tOut = temp; 
+        i++;
+    }
+    while(i < numiter);
+
+}
+
+float accuracy(float *arr1, float *arr2, int len)
+{
+    float err = 0.0; 
+    int i;
+    for(i = 0; i < len; i++)
+    {
+        err += (arr1[i]-arr2[i]) * (arr1[i]-arr2[i]);
+    }
+
+    return (float)sqrt(err/len);
+
+
+}
+void computeTempOMP(float *pIn, float* tIn, float *tOut, 
+        int nx, int ny, int nz, float Cap, 
+        float Rx, float Ry, float Rz, 
+        float dt, int numiter) 
+{  
+
+    float ce, cw, cn, cs, ct, cb, cc;
+
+    float stepDivCap = dt / Cap;
+    ce = cw =stepDivCap/ Rx;
+    cn = cs =stepDivCap/ Ry;
+    ct = cb =stepDivCap/ Rz;
+
+    cc = 1.0 - (2.0*ce + 2.0*cn + 3.0*ct);
+
+
+#pragma omp parallel
+    {
+        int count = 0;
+        float *tIn_t = tIn;
+        float *tOut_t = tOut;
+
+#pragma omp master
+        printf("%d threads running\n", omp_get_num_threads());
+
+        do {
+            int z; 
+#pragma omp for 
+            for (z = 0; z < nz; z++) {
+                int y;
+                for (y = 0; y < ny; y++) {
+                    int x;
+                    for (x = 0; x < nx; x++) {
+                        int c, w, e, n, s, b, t;
+                        c =  x + y * nx + z * nx * ny;
+                        w = (x == 0)    ? c : c - 1;
+                        e = (x == nx-1) ? c : c + 1;
+                        n = (y == 0)    ? c : c - nx;
+                        s = (y == ny-1) ? c : c + nx;
+                        b = (z == 0)    ? c : c - nx * ny;
+                        t = (z == nz-1) ? c : c + nx * ny;
+                        tOut_t[c] = cc * tIn_t[c] + cw * tIn_t[w] + ce * tIn_t[e]
+                            + cs * tIn_t[s] + cn * tIn_t[n] + cb * tIn_t[b] + ct * tIn_t[t]+(dt/Cap) * pIn[c] + ct*amb_temp;
+                    }
+                }
+            }
+            float *t = tIn_t;
+            tIn_t = tOut_t;
+            tOut_t = t; 
+            count++;
+        } while (count < numiter);
+    } 
+    return; 
+} 
+
+void usage(int argc, char **argv)
+{
+    fprintf(stderr, "Usage: %s <rows/cols> <layers> <iterations> <powerFile> <tempFile> <outputFile>\n", argv[0]);
+    fprintf(stderr, "\t<rows/cols>  - number of rows/cols in the grid (positive integer)\n");
+    fprintf(stderr, "\t<layers>  - number of layers in the grid (positive integer)\n");
+
+    fprintf(stderr, "\t<iteration> - number of iterations\n");
+    fprintf(stderr, "\t<powerFile>  - name of the file containing the initial power values of each cell\n");
+    fprintf(stderr, "\t<tempFile>  - name of the file containing the initial temperature values of each cell\n");
+    fprintf(stderr, "\t<outputFile - output file\n");
+    exit(1);
+}
+
+
 
 int main(int argc, char** argv)
 {
-  /* Variable declaration/allocation. */
-  float *A_sw = (float *)malloc(NI*NK*sizeof(float));
-  float *B_sw = (float *)malloc(NK*NJ*sizeof(float));
-  float *C_sw = (float *)malloc(NI*NJ*sizeof(float));
-
-
-  float *A_hw = (float *)malloc(NI*NK*sizeof(float));
-  float *B_hw = (float *)malloc(NK*NJ*sizeof(float));
-  float *C_hw = (float *)malloc(NI*NJ*sizeof(float));
-
-  /* Initialize array(s). */
-  init_array (C_sw, A_sw, B_sw);
-  init_array (C_hw, A_hw, B_hw);
-
-
-  /* Start timer. */
-  timespec timer = tic();
-
-  /* Run kernel. */
-  kernel_gemm (C_sw, A_sw, B_sw, 1.5, 2.5);
-
-  /* Stop and print timer. */
-  toc(&timer, "kernel execution");
-
-    /* Start timer. */
-  timer = tic();
-
-  /* Run kernel. */
-  mm (C_hw, A_hw, B_hw, 1.5, 2.5);
-
-  /* Stop and print timer. */
-  toc(&timer, "kernel execution");
-  
-  /* Print results. */
-  print_array_sum (C_sw);
-  print_array_sum (C_hw);
-
-  //Check results
-  for (int i = 0; i < NI; i++) {
-    for(int j = 0; j < NI; j++)
-      if(C_sw[i*NI + j] != C_hw[i*NI + j]) {
-        printf("TEST FAILED, results not matching, output_sw[%d][%d] = %f, output_hw[%d][%d] = %f.\n",
-	      i,j, C_sw[i*NI + j], i,j, C_hw[i*NI + j]);
-        return -1;
+    if (argc != 7)
+    {
+        usage(argc,argv);
     }
-  }
+
+    char *pfile, *tfile, *ofile;// *testFile;
+    int iterations = atoi(argv[3]);
+
+    pfile = argv[4];
+    tfile = argv[5];
+    ofile = argv[6];
+    //testFile = argv[7];
+    int numCols = atoi(argv[1]);
+    int numRows = atoi(argv[1]);
+    int layers = atoi(argv[2]);
+
+    /* calculating parameters*/
+
+    float dx = chip_height/numRows;
+    float dy = chip_width/numCols;
+    float dz = t_chip/layers;
+
+    float Cap = FACTOR_CHIP * SPEC_HEAT_SI * t_chip * dx * dy;
+    float Rx = dy / (2.0 * K_SI * t_chip * dx);
+    float Ry = dx / (2.0 * K_SI * t_chip * dy);
+    float Rz = dz / (K_SI * dx * dy);
+
+    // cout << Rx << " " << Ry << " " << Rz << endl;
+    float max_slope = MAX_PD / (FACTOR_CHIP * t_chip * SPEC_HEAT_SI);
+    float dt = PRECISION / max_slope;
 
 
-  /* free memory for A, B, C */
-  free(A_sw);
-  free(B_sw);
-  free(C_sw);
+    float *powerIn, *tempOut, *tempIn, *tempCopy;// *pCopy;
+    //    float *d_powerIn, *d_tempIn, *d_tempOut;
+    int size = numCols * numRows * layers;
 
-  free(A_hw);
-  free(B_hw);
-  free(C_hw);
-  
-  printf("TEST PASSED!\n");
-  return 0;
-}
+    powerIn = (float*)calloc(size, sizeof(float));
+    tempCopy = (float*)malloc(size * sizeof(float));
+    tempIn = (float*)calloc(size,sizeof(float));
+    tempOut = (float*)calloc(size, sizeof(float));
+    //pCopy = (float*)calloc(size,sizeof(float));
+    float* answer = (float*)calloc(size, sizeof(float));
+
+    // outCopy = (float*)calloc(size, sizeof(float));
+    readinput(powerIn,numRows, numCols, layers,pfile);
+    readinput(tempIn, numRows, numCols, layers, tfile);
+
+    memcpy(tempCopy,tempIn, size * sizeof(float));
+
+    struct timeval start, stop;
+    float time, CPU_time;
+    gettimeofday(&start,NULL);
+    computeTempOMP(powerIn, tempIn, tempOut, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt,iterations);
+    gettimeofday(&stop,NULL);
+    time = (stop.tv_usec-start.tv_usec)*1.0e-6 + stop.tv_sec - start.tv_sec;
+
+    gettimeofday(&start,NULL);
+    computeTempCPU(powerIn, tempCopy, answer, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt,iterations);
+    gettimeofday(&stop,NULL);
+    CPU_time = (stop.tv_usec-start.tv_usec)*1.0e-6 + stop.tv_sec - start.tv_sec;
+
+    float acc = accuracy(tempOut,answer,numRows*numCols*layers);
+    printf("Time: %.3f (s)\n",time);
+    printf("CPU Time: %.3f (s)\n",CPU_time);
+    printf("Accuracy: %e\n",acc);
+    writeoutput(tempOut,numRows, numCols, layers, ofile);
+    free(tempIn);
+    free(tempOut); free(powerIn);
+    return 0;
+}	
+
+

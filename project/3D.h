@@ -1,11 +1,10 @@
-#ifndef _H_MM_H_
-#define _H_MM_H_
+#ifndef _H_3D_H_
+#define _H_3D_H_
 
-#define NI 32
-#define NJ 32
-#define NK 32
-#define buff_size 16
 
-void mm(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float alpha, float beta);
+void computeTempFPGA(float *pIn, float* tIn, float *tOut, 
+        int nx, int ny, int nz, float Cap, 
+        float Rx, float Ry, float Rz, 
+        float dt, int numiter);
 
-#endif // _H_MM_H_
+#endif // _H_3D_H_
