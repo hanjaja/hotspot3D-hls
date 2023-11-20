@@ -1,6 +1,7 @@
 # Prerequisites
 *.d
 
+
 # Compiled Object files
 *.slo
 *.lo
@@ -30,3 +31,11 @@
 *.exe
 *.out
 *.app
+
+# Project dependent files to ignore
+*.log
+*.vhd
+*.v
+*.xml
+*.g
+*.bc
