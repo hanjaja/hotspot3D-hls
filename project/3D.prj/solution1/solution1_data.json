@@ -1,0 +1,708 @@
+{
+  "Top": "computeTempFPGA",
+  "RtlTop": "computeTempFPGA",
+  "RtlPrefix": "",
+  "RtlSubPrefix": "computeTempFPGA_",
+  "SourceLanguage": "cpp",
+  "HostMachineBits": "64",
+  "FunctionProtocol": "ap_ctrl_hs",
+  "ResetStyle": "control",
+  "Target": {
+    "Family": "virtexuplushbm",
+    "Device": "xcu50",
+    "Package": "-fsvh2104",
+    "Speed": "-2-e",
+    "Triple": "fpga64-xilinx-none"
+  },
+  "Args": {
+    "pIn": {
+      "index": "0",
+      "direction": "in",
+      "srcType": "float*",
+      "srcSize": "32",
+      "hwRefs": [{
+          "type": "port",
+          "interface": "pIn",
+          "name": "pIn",
+          "usage": "data",
+          "direction": "in"
+        }]
+    },
+    "tIn": {
+      "index": "1",
+      "direction": "inout",
+      "srcType": "float*",
+      "srcSize": "32",
+      "hwRefs": [
+        {
+          "type": "port",
+          "interface": "tIn_i",
+          "name": "tIn_i",
+          "usage": "data",
+          "direction": "in"
+        },
+        {
+          "type": "port",
+          "interface": "tIn_o",
+          "name": "tIn_o",
+          "usage": "data",
+          "direction": "out"
+        },
+        {
+          "type": "port",
+          "interface": "tIn_o_ap_vld",
+          "name": "tIn_o_ap_vld",
+          "usage": "control",
+          "direction": "inout"
+        }
+      ]
+    },
+    "tOut": {
+      "index": "2",
+      "direction": "inout",
+      "srcType": "float*",
+      "srcSize": "32",
+      "hwRefs": [
+        {
+          "type": "port",
+          "interface": "tOut_i",
+          "name": "tOut_i",
+          "usage": "data",
+          "direction": "in"
+        },
+        {
+          "type": "port",
+          "interface": "tOut_o",
+          "name": "tOut_o",
+          "usage": "data",
+          "direction": "out"
+        },
+        {
+          "type": "port",
+          "interface": "tOut_o_ap_vld",
+          "name": "tOut_o_ap_vld",
+          "usage": "control",
+          "direction": "inout"
+        }
+      ]
+    },
+    "nx": {
+      "index": "3",
+      "direction": "in",
+      "srcType": "int",
+      "srcSize": "32",
+      "hwRefs": [{
+          "type": "port",
+          "interface": "nx",
+          "name": "nx",
+          "usage": "data",
+          "direction": "in"
+        }]
+    },
+    "ny": {
+      "index": "4",
+      "direction": "in",
+      "srcType": "int",
+      "srcSize": "32",
+      "hwRefs": [{
+          "type": "port",
+          "interface": "ny",
+          "name": "ny",
+          "usage": "data",
+          "direction": "in"
+        }]
+    },
+    "nz": {
+      "index": "5",
+      "direction": "in",
+      "srcType": "int",
+      "srcSize": "32",
+      "hwRefs": [{
+          "type": "port",
+          "interface": "nz",
+          "name": "nz",
+          "usage": "data",
+          "direction": "in"
+        }]
+    },
+    "Cap": {
+      "index": "6",
+      "direction": "in",
+      "srcType": "float",
+      "srcSize": "32",
+      "hwRefs": [{
+          "type": "port",
+          "interface": "Cap",
+          "name": "Cap",
+          "usage": "data",
+          "direction": "in"
+        }]
+    },
+    "Rx": {
+      "index": "7",
+      "direction": "in",
+      "srcType": "float",
+      "srcSize": "32",
+      "hwRefs": [{
+          "type": "port",
+          "interface": "Rx",
+          "name": "Rx",
+          "usage": "data",
+          "direction": "in"
+        }]
+    },
+    "Ry": {
+      "index": "8",
+      "direction": "in",
+      "srcType": "float",
+      "srcSize": "32",
+      "hwRefs": [{
+          "type": "port",
+          "interface": "Ry",
+          "name": "Ry",
+          "usage": "data",
+          "direction": "in"
+        }]
+    },
+    "Rz": {
+      "index": "9",
+      "direction": "in",
+      "srcType": "float",
+      "srcSize": "32",
+      "hwRefs": [{
+          "type": "port",
+          "interface": "Rz",
+          "name": "Rz",
+          "usage": "data",
+          "direction": "in"
+        }]
+    },
+    "dt": {
+      "index": "10",
+      "direction": "in",
+      "srcType": "float",
+      "srcSize": "32",
+      "hwRefs": [{
+          "type": "port",
+          "interface": "dt",
+          "name": "dt",
+          "usage": "data",
+          "direction": "in"
+        }]
+    },
+    "numiter": {
+      "index": "11",
+      "direction": "in",
+      "srcType": "int",
+      "srcSize": "32",
+      "hwRefs": [{
+          "type": "port",
+          "interface": "numiter",
+          "name": "numiter",
+          "usage": "data",
+          "direction": "in"
+        }]
+    }
+  },
+  "HlsSolution": {
+    "FlowTarget": "vivado",
+    "DirectiveTcl": ["set_directive_top computeTempFPGA -name computeTempFPGA"],
+    "ProfileOption": "0",
+    "ProfileType": "none",
+    "KernelName": "computeTempFPGA"
+  },
+  "ClockInfo": {
+    "ClockName": "ap_clk",
+    "ClockPeriod": "5",
+    "Uncertainty": "1.35",
+    "IsCombinational": "0",
+    "II": "x",
+    "Latency": "90"
+  },
+  "Xdc": {"OocClocks": ["create_clock -name ap_clk -period 5.000 [get_ports ap_clk]"]},
+  "Ipx": {
+    "Vendor": "xilinx.com",
+    "Library": "hls",
+    "Name": "computeTempFPGA",
+    "Version": "1.0",
+    "DisplayName": "Computetempfpga",
+    "Revision": "",
+    "Description": "An IP generated by Vitis HLS",
+    "Taxonomy": "\/VITIS_HLS_IP",
+    "AutoFamilySupport": "",
+    "ZipFile": "xilinx_com_hls_computeTempFPGA_1_0.zip"
+  },
+  "Files": {
+    "CSource": ["..\/..\/3D.cpp"],
+    "Vhdl": [
+      "impl\/vhdl\/computeTempFPGA_dadddsub_64ns_64ns_64_5_full_dsp_1.vhd",
+      "impl\/vhdl\/computeTempFPGA_dmul_64ns_64ns_64_5_max_dsp_1.vhd",
+      "impl\/vhdl\/computeTempFPGA_fadd_32ns_32ns_32_5_full_dsp_1.vhd",
+      "impl\/vhdl\/computeTempFPGA_fdiv_32ns_32ns_32_10_no_dsp_1.vhd",
+      "impl\/vhdl\/computeTempFPGA_fmul_32ns_32ns_32_4_max_dsp_1.vhd",
+      "impl\/vhdl\/computeTempFPGA_fpext_32ns_64_2_no_dsp_1.vhd",
+      "impl\/vhdl\/computeTempFPGA_fptrunc_64ns_32_2_no_dsp_1.vhd",
+      "impl\/vhdl\/computeTempFPGA_mul_32ns_32ns_64_1_1.vhd",
+      "impl\/vhdl\/computeTempFPGA_mul_32ns_64ns_96_2_1.vhd",
+      "impl\/vhdl\/computeTempFPGA.vhd"
+    ],
+    "Verilog": [
+      "impl\/verilog\/computeTempFPGA_dadddsub_64ns_64ns_64_5_full_dsp_1.v",
+      "impl\/verilog\/computeTempFPGA_dmul_64ns_64ns_64_5_max_dsp_1.v",
+      "impl\/verilog\/computeTempFPGA_fadd_32ns_32ns_32_5_full_dsp_1.v",
+      "impl\/verilog\/computeTempFPGA_fdiv_32ns_32ns_32_10_no_dsp_1.v",
+      "impl\/verilog\/computeTempFPGA_fmul_32ns_32ns_32_4_max_dsp_1.v",
+      "impl\/verilog\/computeTempFPGA_fpext_32ns_64_2_no_dsp_1.v",
+      "impl\/verilog\/computeTempFPGA_fptrunc_64ns_32_2_no_dsp_1.v",
+      "impl\/verilog\/computeTempFPGA_mul_32ns_32ns_64_1_1.v",
+      "impl\/verilog\/computeTempFPGA_mul_32ns_64ns_96_2_1.v",
+      "impl\/verilog\/computeTempFPGA.v"
+    ],
+    "IpMisc": ["impl\/misc\/logo.png"],
+    "Subcore": [
+      "impl\/misc\/computeTempFPGA_ap_dadddsub_3_full_dsp_64_ip.tcl",
+      "impl\/misc\/computeTempFPGA_ap_dmul_3_max_dsp_64_ip.tcl",
+      "impl\/misc\/computeTempFPGA_ap_fadd_3_full_dsp_32_ip.tcl",
+      "impl\/misc\/computeTempFPGA_ap_fdiv_8_no_dsp_32_ip.tcl",
+      "impl\/misc\/computeTempFPGA_ap_fmul_2_max_dsp_32_ip.tcl",
+      "impl\/misc\/computeTempFPGA_ap_fpext_0_no_dsp_32_ip.tcl",
+      "impl\/misc\/computeTempFPGA_ap_fptrunc_0_no_dsp_64_ip.tcl"
+    ],
+    "DesignXml": ".autopilot\/db\/computeTempFPGA.design.xml",
+    "DebugDir": ".debug",
+    "ProtoInst": ["\/ugrad\/1\/kmokaya\/hotspot3D-hls\/project\/3D.prj\/solution1\/.debug\/computeTempFPGA.protoinst"]
+  },
+  "SubcoreInfo": {
+    "HasXpmMemory": false,
+    "HasClockedDsp": false,
+    "Ip": [
+      {
+        "Name": "computeTempFPGA_ap_dadddsub_3_full_dsp_64",
+        "Vlnv": "xilinx.com:ip:floating_point:7.1",
+        "Params": "CONFIG.a_precision_type Double CONFIG.a_tuser_width 1 CONFIG.add_sub_value Both CONFIG.b_tuser_width 1 CONFIG.c_a_exponent_width 11 CONFIG.c_a_fraction_width 53 CONFIG.c_compare_operation Programmable CONFIG.c_has_divide_by_zero false CONFIG.c_has_invalid_op false CONFIG.c_has_overflow false CONFIG.c_has_underflow false CONFIG.c_latency 3 CONFIG.c_mult_usage Full_Usage CONFIG.c_optimization Speed_Optimized CONFIG.c_rate 1 CONFIG.c_result_exponent_width 11 CONFIG.c_result_fraction_width 53 CONFIG.component_name computeTempFPGA_ap_dadddsub_3_full_dsp_64 CONFIG.flow_control NonBlocking CONFIG.has_a_tlast false CONFIG.has_a_tuser false CONFIG.has_aclken true CONFIG.has_aresetn false CONFIG.has_b_tlast false CONFIG.has_b_tuser false CONFIG.has_operation_tlast false CONFIG.has_operation_tuser false CONFIG.has_result_tready false CONFIG.maximum_latency false CONFIG.operation_tuser_width 1 CONFIG.operation_type Add_Subtract CONFIG.result_precision_type Double CONFIG.result_tlast_behv Null"
+      },
+      {
+        "Name": "computeTempFPGA_ap_dmul_3_max_dsp_64",
+        "Vlnv": "xilinx.com:ip:floating_point:7.1",
+        "Params": "CONFIG.a_precision_type Double CONFIG.a_tuser_width 1 CONFIG.add_sub_value Both CONFIG.b_tuser_width 1 CONFIG.c_a_exponent_width 11 CONFIG.c_a_fraction_width 53 CONFIG.c_compare_operation Programmable CONFIG.c_has_divide_by_zero false CONFIG.c_has_invalid_op false CONFIG.c_has_overflow false CONFIG.c_has_underflow false CONFIG.c_latency 3 CONFIG.c_mult_usage Max_Usage CONFIG.c_optimization Speed_Optimized CONFIG.c_rate 1 CONFIG.c_result_exponent_width 11 CONFIG.c_result_fraction_width 53 CONFIG.component_name computeTempFPGA_ap_dmul_3_max_dsp_64 CONFIG.flow_control NonBlocking CONFIG.has_a_tlast false CONFIG.has_a_tuser false CONFIG.has_aclken true CONFIG.has_aresetn false CONFIG.has_b_tlast false CONFIG.has_b_tuser false CONFIG.has_operation_tlast false CONFIG.has_operation_tuser false CONFIG.has_result_tready false CONFIG.maximum_latency false CONFIG.operation_tuser_width 1 CONFIG.operation_type Multiply CONFIG.result_precision_type Double CONFIG.result_tlast_behv Null"
+      },
+      {
+        "Name": "computeTempFPGA_ap_fadd_3_full_dsp_32",
+        "Vlnv": "xilinx.com:ip:floating_point:7.1",
+        "Params": "CONFIG.a_precision_type Single CONFIG.a_tuser_width 1 CONFIG.add_sub_value Add CONFIG.b_tuser_width 1 CONFIG.c_a_exponent_width 8 CONFIG.c_a_fraction_width 24 CONFIG.c_compare_operation Programmable CONFIG.c_has_divide_by_zero false CONFIG.c_has_invalid_op false CONFIG.c_has_overflow false CONFIG.c_has_underflow false CONFIG.c_latency 3 CONFIG.c_mult_usage Full_Usage CONFIG.c_optimization Speed_Optimized CONFIG.c_rate 1 CONFIG.c_result_exponent_width 8 CONFIG.c_result_fraction_width 24 CONFIG.component_name computeTempFPGA_ap_fadd_3_full_dsp_32 CONFIG.flow_control NonBlocking CONFIG.has_a_tlast false CONFIG.has_a_tuser false CONFIG.has_aclken true CONFIG.has_aresetn false CONFIG.has_b_tlast false CONFIG.has_b_tuser false CONFIG.has_operation_tlast false CONFIG.has_operation_tuser false CONFIG.has_result_tready false CONFIG.maximum_latency false CONFIG.operation_tuser_width 1 CONFIG.operation_type Add_Subtract CONFIG.result_precision_type Single CONFIG.result_tlast_behv Null"
+      },
+      {
+        "Name": "computeTempFPGA_ap_fdiv_8_no_dsp_32",
+        "Vlnv": "xilinx.com:ip:floating_point:7.1",
+        "Params": "CONFIG.a_precision_type Single CONFIG.a_tuser_width 1 CONFIG.add_sub_value Both CONFIG.b_tuser_width 1 CONFIG.c_a_exponent_width 8 CONFIG.c_a_fraction_width 24 CONFIG.c_compare_operation Programmable CONFIG.c_has_divide_by_zero false CONFIG.c_has_invalid_op false CONFIG.c_has_overflow false CONFIG.c_has_underflow false CONFIG.c_latency 8 CONFIG.c_mult_usage No_Usage CONFIG.c_optimization Speed_Optimized CONFIG.c_rate 1 CONFIG.c_result_exponent_width 8 CONFIG.c_result_fraction_width 24 CONFIG.component_name computeTempFPGA_ap_fdiv_8_no_dsp_32 CONFIG.flow_control NonBlocking CONFIG.has_a_tlast false CONFIG.has_a_tuser false CONFIG.has_aclken true CONFIG.has_aresetn false CONFIG.has_b_tlast false CONFIG.has_b_tuser false CONFIG.has_operation_tlast false CONFIG.has_operation_tuser false CONFIG.has_result_tready false CONFIG.maximum_latency false CONFIG.operation_tuser_width 1 CONFIG.operation_type Divide CONFIG.result_precision_type Single CONFIG.result_tlast_behv Null"
+      },
+      {
+        "Name": "computeTempFPGA_ap_fmul_2_max_dsp_32",
+        "Vlnv": "xilinx.com:ip:floating_point:7.1",
+        "Params": "CONFIG.a_precision_type Single CONFIG.a_tuser_width 1 CONFIG.add_sub_value Both CONFIG.b_tuser_width 1 CONFIG.c_a_exponent_width 8 CONFIG.c_a_fraction_width 24 CONFIG.c_compare_operation Programmable CONFIG.c_has_divide_by_zero false CONFIG.c_has_invalid_op false CONFIG.c_has_overflow false CONFIG.c_has_underflow false CONFIG.c_latency 2 CONFIG.c_mult_usage Max_Usage CONFIG.c_optimization Speed_Optimized CONFIG.c_rate 1 CONFIG.c_result_exponent_width 8 CONFIG.c_result_fraction_width 24 CONFIG.component_name computeTempFPGA_ap_fmul_2_max_dsp_32 CONFIG.flow_control NonBlocking CONFIG.has_a_tlast false CONFIG.has_a_tuser false CONFIG.has_aclken true CONFIG.has_aresetn false CONFIG.has_b_tlast false CONFIG.has_b_tuser false CONFIG.has_operation_tlast false CONFIG.has_operation_tuser false CONFIG.has_result_tready false CONFIG.maximum_latency false CONFIG.operation_tuser_width 1 CONFIG.operation_type Multiply CONFIG.result_precision_type Single CONFIG.result_tlast_behv Null"
+      },
+      {
+        "Name": "computeTempFPGA_ap_fpext_0_no_dsp_32",
+        "Vlnv": "xilinx.com:ip:floating_point:7.1",
+        "Params": "CONFIG.a_precision_type Single CONFIG.a_tuser_width 1 CONFIG.add_sub_value Both CONFIG.b_tuser_width 1 CONFIG.c_a_exponent_width 8 CONFIG.c_a_fraction_width 24 CONFIG.c_compare_operation Programmable CONFIG.c_has_divide_by_zero false CONFIG.c_has_invalid_op false CONFIG.c_has_overflow false CONFIG.c_has_underflow false CONFIG.c_latency 0 CONFIG.c_mult_usage No_Usage CONFIG.c_optimization Speed_Optimized CONFIG.c_rate 1 CONFIG.c_result_exponent_width 11 CONFIG.c_result_fraction_width 53 CONFIG.component_name computeTempFPGA_ap_fpext_0_no_dsp_32 CONFIG.flow_control NonBlocking CONFIG.has_a_tlast false CONFIG.has_a_tuser false CONFIG.has_aclken false CONFIG.has_aresetn false CONFIG.has_b_tlast false CONFIG.has_b_tuser false CONFIG.has_operation_tlast false CONFIG.has_operation_tuser false CONFIG.has_result_tready false CONFIG.maximum_latency false CONFIG.operation_tuser_width 1 CONFIG.operation_type Float_to_Float CONFIG.result_precision_type Double CONFIG.result_tlast_behv Null"
+      },
+      {
+        "Name": "computeTempFPGA_ap_fptrunc_0_no_dsp_64",
+        "Vlnv": "xilinx.com:ip:floating_point:7.1",
+        "Params": "CONFIG.a_precision_type Double CONFIG.a_tuser_width 1 CONFIG.add_sub_value Both CONFIG.b_tuser_width 1 CONFIG.c_a_exponent_width 11 CONFIG.c_a_fraction_width 53 CONFIG.c_compare_operation Programmable CONFIG.c_has_divide_by_zero false CONFIG.c_has_invalid_op false CONFIG.c_has_overflow false CONFIG.c_has_underflow false CONFIG.c_latency 0 CONFIG.c_mult_usage No_Usage CONFIG.c_optimization Speed_Optimized CONFIG.c_rate 1 CONFIG.c_result_exponent_width 8 CONFIG.c_result_fraction_width 24 CONFIG.component_name computeTempFPGA_ap_fptrunc_0_no_dsp_64 CONFIG.flow_control NonBlocking CONFIG.has_a_tlast false CONFIG.has_a_tuser false CONFIG.has_aclken false CONFIG.has_aresetn false CONFIG.has_b_tlast false CONFIG.has_b_tuser false CONFIG.has_operation_tlast false CONFIG.has_operation_tuser false CONFIG.has_result_tready false CONFIG.maximum_latency false CONFIG.operation_tuser_width 1 CONFIG.operation_type Float_to_Float CONFIG.result_precision_type Single CONFIG.result_tlast_behv Null"
+      }
+    ]
+  },
+  "Interfaces": {
+    "ap_clk": {
+      "type": "clock",
+      "busTypeName": "clock",
+      "mode": "slave",
+      "busParams": {"ASSOCIATED_RESET": "ap_rst"},
+      "portMap": {"ap_clk": "CLK"},
+      "ports": ["ap_clk"]
+    },
+    "ap_ctrl": {
+      "type": "ap_ctrl",
+      "busTypeName": "acc_handshake",
+      "mode": "slave",
+      "portMap": {
+        "ap_start": "start",
+        "ap_done": "done",
+        "ap_idle": "idle",
+        "ap_ready": "ready"
+      },
+      "ports": [
+        "ap_done",
+        "ap_idle",
+        "ap_ready",
+        "ap_start"
+      ]
+    },
+    "ap_rst": {
+      "type": "reset",
+      "busTypeName": "reset",
+      "mode": "slave",
+      "busParams": {"POLARITY": "ACTIVE_HIGH"},
+      "portMap": {"ap_rst": "RST"},
+      "ports": ["ap_rst"]
+    },
+    "Cap": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"Cap": "DATA"},
+      "ports": ["Cap"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "Cap"
+        }]
+    },
+    "dt": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"dt": "DATA"},
+      "ports": ["dt"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "dt"
+        }]
+    },
+    "numiter": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"numiter": "DATA"},
+      "ports": ["numiter"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "numiter"
+        }]
+    },
+    "nx": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"nx": "DATA"},
+      "ports": ["nx"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "nx"
+        }]
+    },
+    "ny": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"ny": "DATA"},
+      "ports": ["ny"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "ny"
+        }]
+    },
+    "nz": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"nz": "DATA"},
+      "ports": ["nz"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "nz"
+        }]
+    },
+    "pIn": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"pIn": "DATA"},
+      "ports": ["pIn"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "pIn"
+        }]
+    },
+    "Rx": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"Rx": "DATA"},
+      "ports": ["Rx"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "Rx"
+        }]
+    },
+    "Ry": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"Ry": "DATA"},
+      "ports": ["Ry"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "Ry"
+        }]
+    },
+    "Rz": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"Rz": "DATA"},
+      "ports": ["Rz"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "Rz"
+        }]
+    },
+    "tIn_i": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"tIn_i": "DATA"},
+      "ports": ["tIn_i"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "tIn"
+        }]
+    },
+    "tIn_o": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "master",
+      "dataWidth": "32",
+      "portMap": {"tIn_o": "DATA"},
+      "ports": ["tIn_o"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "tIn"
+        }]
+    },
+    "tOut_i": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "slave",
+      "dataWidth": "32",
+      "portMap": {"tOut_i": "DATA"},
+      "ports": ["tOut_i"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "tOut"
+        }]
+    },
+    "tOut_o": {
+      "type": "data",
+      "busTypeName": "data",
+      "mode": "master",
+      "dataWidth": "32",
+      "portMap": {"tOut_o": "DATA"},
+      "ports": ["tOut_o"],
+      "constraints": [{
+          "constraint_type": "pragma interface",
+          "mode": "ap_none",
+          "register_option": "0",
+          "argName": "tOut"
+        }]
+    }
+  },
+  "RtlPorts": {
+    "ap_clk": {
+      "dir": "in",
+      "width": "1"
+    },
+    "ap_rst": {
+      "dir": "in",
+      "width": "1"
+    },
+    "ap_start": {
+      "dir": "in",
+      "width": "1"
+    },
+    "ap_done": {
+      "dir": "out",
+      "width": "1"
+    },
+    "ap_idle": {
+      "dir": "out",
+      "width": "1"
+    },
+    "ap_ready": {
+      "dir": "out",
+      "width": "1"
+    },
+    "pIn": {
+      "dir": "in",
+      "width": "32"
+    },
+    "tIn_i": {
+      "dir": "in",
+      "width": "32"
+    },
+    "tIn_o": {
+      "dir": "out",
+      "width": "32"
+    },
+    "tIn_o_ap_vld": {
+      "dir": "out",
+      "width": "1"
+    },
+    "tOut_i": {
+      "dir": "in",
+      "width": "32"
+    },
+    "tOut_o": {
+      "dir": "out",
+      "width": "32"
+    },
+    "tOut_o_ap_vld": {
+      "dir": "out",
+      "width": "1"
+    },
+    "nx": {
+      "dir": "in",
+      "width": "32"
+    },
+    "ny": {
+      "dir": "in",
+      "width": "32"
+    },
+    "nz": {
+      "dir": "in",
+      "width": "32"
+    },
+    "Cap": {
+      "dir": "in",
+      "width": "32"
+    },
+    "Rx": {
+      "dir": "in",
+      "width": "32"
+    },
+    "Ry": {
+      "dir": "in",
+      "width": "32"
+    },
+    "Rz": {
+      "dir": "in",
+      "width": "32"
+    },
+    "dt": {
+      "dir": "in",
+      "width": "32"
+    },
+    "numiter": {
+      "dir": "in",
+      "width": "32"
+    }
+  },
+  "ModuleInfo": {
+    "Hierarchy": {"ModuleName": "computeTempFPGA"},
+    "Info": {"computeTempFPGA": {
+        "FunctionProtocol": "ap_ctrl_hs",
+        "isTaskLevelControl": "0",
+        "isPipelined": "0",
+        "isCombinational": "0",
+        "isOneStateSeq": "0"
+      }},
+    "Metrics": {"computeTempFPGA": {
+        "Latency": {
+          "LatencyBest": "90",
+          "LatencyAvg": "576716993",
+          "LatencyWorst": "9227469143",
+          "PipelineIIMin": "91",
+          "PipelineIIMax": "9227469144",
+          "PipelineII": "91 ~ 9227469144",
+          "PipelineDepth": "",
+          "PipelineType": "none"
+        },
+        "Timing": {
+          "Target": "5.00",
+          "Uncertainty": "1.35",
+          "Estimate": "3.612"
+        },
+        "Loops": [{
+            "Name": "VITIS_LOOP_28_1",
+            "TripCount": "",
+            "LatencyMin": "46",
+            "LatencyMax": "9227469099",
+            "Latency": "46 ~ 9227469099",
+            "PipelineII": "",
+            "PipelineDepthMin": "47",
+            "PipelineDepthMax": "92274691",
+            "PipelineDepth": "47 ~ 92274691",
+            "Loops": [{
+                "Name": "VITIS_LOOP_30_2_VITIS_LOOP_32_3_VITIS_LOOP_34_4",
+                "TripCount": "",
+                "LatencyMin": "44",
+                "LatencyMax": "92274688",
+                "Latency": "44 ~ 92274688",
+                "PipelineII": "44",
+                "PipelineDepth": "44"
+              }]
+          }],
+        "Area": {
+          "DSP": "29",
+          "AVAIL_DSP": "5952",
+          "UTIL_DSP": "~0",
+          "FF": "3303",
+          "AVAIL_FF": "1743360",
+          "UTIL_FF": "~0",
+          "LUT": "2547",
+          "AVAIL_LUT": "871680",
+          "UTIL_LUT": "~0",
+          "BRAM_18K": "0",
+          "AVAIL_BRAM": "2688",
+          "UTIL_BRAM": "0",
+          "URAM": "0",
+          "AVAIL_URAM": "640",
+          "UTIL_URAM": "0"
+        }
+      }}
+  },
+  "GenerateBdFiles": "0",
+  "GenData": {
+    "DataVersion": "0.2",
+    "Time": "2023-11-19 17:37:22 PST",
+    "ToolName": "vivado_hls",
+    "ToolVersion": "2020.2.2"
+  }
+}

@@ -1,0 +1,79 @@
+==============================================================
+Vitis HLS - High-Level Synthesis from C, C++ and OpenCL v2020.2.2 (64-bit)
+Copyright 1986-2021 Xilinx, Inc. All Rights Reserved.
+==============================================================
+INFO: [HLS 200-1505] Using default flow_target 'vivado'
+INFO: [HLS 200-1510] Running: set_part xcu50-fsvh2104-2-e 
+INFO: [HLS 200-10] Setting target device to 'xcu50-fsvh2104-2-e'
+INFO: [HLS 200-1510] Running: create_clock -period 5 
+INFO: [SYN 201-201] Setting up clock 'default' with a period of 5ns.
+INFO: [HLS 200-1510] Running: csim_design 
+INFO: [SIM 211-2] *************** CSIM start ***************
+INFO: [SIM 211-4] CSIM will launch GCC as the compiler.
+INFO: [SIM 211-1] CSim done with 0 errors.
+INFO: [SIM 211-3] *************** CSIM finish ***************
+INFO: [HLS 200-111] Finished Command csim_design CPU user time: 6.37 seconds. CPU system time: 0.36 seconds. Elapsed time: 6.9 seconds; current allocated memory: 211.864 MB.
+INFO: [HLS 200-1510] Running: csynth_design 
+INFO: [HLS 200-111] Finished File checks and directory preparation: CPU user time: 0 seconds. CPU system time: 0 seconds. Elapsed time: 0.04 seconds; current allocated memory: 212.084 MB.
+INFO: [HLS 200-10] Analyzing design file '3D.cpp' ... 
+INFO: [HLS 200-111] Finished Source Code Analysis and Preprocessing: CPU user time: 0.53 seconds. CPU system time: 0.19 seconds. Elapsed time: 0.96 seconds; current allocated memory: 213.663 MB.
+INFO: [HLS 200-777] Using interface defaults for 'Vivado' flow target.
+INFO: [HLS 200-111] Finished Compiling Optimization and Transform: CPU user time: 3.27 seconds. CPU system time: 0.3 seconds. Elapsed time: 4.07 seconds; current allocated memory: 214.865 MB.
+INFO: [HLS 200-111] Finished Checking Pragmas: CPU user time: 0 seconds. CPU system time: 0 seconds. Elapsed time: 0 seconds; current allocated memory: 214.866 MB.
+INFO: [HLS 200-10] Starting code transformations ...
+INFO: [HLS 200-111] Finished Standard Transforms: CPU user time: 0.04 seconds. CPU system time: 0 seconds. Elapsed time: 0.08 seconds; current allocated memory: 216.159 MB.
+INFO: [HLS 200-10] Checking synthesizability ...
+INFO: [HLS 200-111] Finished Checking Synthesizability: CPU user time: 0.04 seconds. CPU system time: 0 seconds. Elapsed time: 0.08 seconds; current allocated memory: 215.394 MB.
+INFO: [XFORM 203-510] Pipelining loop 'VITIS_LOOP_34_4' (3D.cpp:26) in function 'computeTempFPGA' automatically.
+INFO: [XFORM 203-401] Performing if-conversion on hyperblock from (3D.cpp:26:9) to (3D.cpp:47:29) in function 'computeTempFPGA'... converting 4 basic blocks.
+INFO: [HLS 200-111] Finished Loop, function and other optimizations: CPU user time: 0.17 seconds. CPU system time: 0.01 seconds. Elapsed time: 0.33 seconds; current allocated memory: 235.919 MB.
+INFO: [XFORM 203-541] Flattening a loop nest 'VITIS_LOOP_32_3' (3D.cpp:26:11) in function 'computeTempFPGA'.
+INFO: [XFORM 203-541] Flattening a loop nest 'VITIS_LOOP_30_2' (3D.cpp:26:13) in function 'computeTempFPGA'.
+WARNING: [HLS 200-960] Cannot flatten loop 'VITIS_LOOP_28_1' (3D.cpp:27:9) in function 'computeTempFPGA' either the parent loop or sub loop is do-while loop.
+INFO: [HLS 200-111] Finished Architecture Synthesis: CPU user time: 0.1 seconds. CPU system time: 0.01 seconds. Elapsed time: 0.4 seconds; current allocated memory: 228.653 MB.
+INFO: [HLS 200-10] Starting hardware synthesis ...
+INFO: [HLS 200-10] Synthesizing 'computeTempFPGA' ...
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-42] -- Implementing module 'computeTempFPGA' 
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [SCHED 204-11] Starting scheduling ...
+INFO: [SCHED 204-61] Pipelining loop 'VITIS_LOOP_30_2_VITIS_LOOP_32_3_VITIS_LOOP_34_4'.
+WARNING: [HLS 200-880] The II Violation in module 'computeTempFPGA' (loop 'VITIS_LOOP_30_2_VITIS_LOOP_32_3_VITIS_LOOP_34_4'): Unable to enforce a carried dependence constraint (II = 1, distance = 1, offset = 1) between wire write on port 'tIn' (3D.cpp:47) and wire read on port 'tIn' (3D.cpp:47).
+WARNING: [HLS 200-880] The II Violation in module 'computeTempFPGA' (loop 'VITIS_LOOP_30_2_VITIS_LOOP_32_3_VITIS_LOOP_34_4'): Unable to enforce a carried dependence constraint (II = 2, distance = 1, offset = 1) between wire write on port 'tIn' (3D.cpp:47) and wire read on port 'tIn' (3D.cpp:47).
+WARNING: [HLS 200-880] The II Violation in module 'computeTempFPGA' (loop 'VITIS_LOOP_30_2_VITIS_LOOP_32_3_VITIS_LOOP_34_4'): Unable to enforce a carried dependence constraint (II = 3, distance = 1, offset = 1) between wire write on port 'tIn' (3D.cpp:47) and wire read on port 'tIn' (3D.cpp:47).
+WARNING: [HLS 200-880] The II Violation in module 'computeTempFPGA' (loop 'VITIS_LOOP_30_2_VITIS_LOOP_32_3_VITIS_LOOP_34_4'): Unable to enforce a carried dependence constraint (II = 4, distance = 1, offset = 1) between wire write on port 'tIn' (3D.cpp:47) and wire read on port 'tIn' (3D.cpp:47).
+WARNING: [HLS 200-880] The II Violation in module 'computeTempFPGA' (loop 'VITIS_LOOP_30_2_VITIS_LOOP_32_3_VITIS_LOOP_34_4'): Unable to enforce a carried dependence constraint (II = 35, distance = 1, offset = 1) between wire write on port 'tIn' (3D.cpp:47) and wire read on port 'tIn' (3D.cpp:47).
+WARNING: [HLS 200-880] The II Violation in module 'computeTempFPGA' (loop 'VITIS_LOOP_30_2_VITIS_LOOP_32_3_VITIS_LOOP_34_4'): Unable to enforce a carried dependence constraint (II = 43, distance = 1, offset = 1) between wire write on port 'tIn' (3D.cpp:47) and wire read on port 'tIn' (3D.cpp:47).
+INFO: [HLS 200-1470] Pipelining result : Target II = 1, Final II = 44, Depth = 44, loop 'VITIS_LOOP_30_2_VITIS_LOOP_32_3_VITIS_LOOP_34_4'
+INFO: [SCHED 204-11] Finished scheduling.
+INFO: [HLS 200-111] Finished Scheduling: CPU user time: 0.31 seconds. CPU system time: 0 seconds. Elapsed time: 0.43 seconds; current allocated memory: 229.464 MB.
+INFO: [BIND 205-100] Starting micro-architecture generation ...
+INFO: [BIND 205-101] Performing variable lifetime analysis.
+INFO: [BIND 205-101] Exploring resource sharing.
+INFO: [BIND 205-101] Binding ...
+INFO: [BIND 205-100] Finished micro-architecture generation.
+INFO: [HLS 200-111] Finished Binding: CPU user time: 0.42 seconds. CPU system time: 0 seconds. Elapsed time: 0.48 seconds; current allocated memory: 230.290 MB.
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-10] -- Generating RTL for module 'computeTempFPGA' 
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/pIn' to 'ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/tIn' to 'ap_ovld'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/tOut' to 'ap_ovld'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/nx' to 'ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/ny' to 'ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/nz' to 'ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/Cap' to 'ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/Rx' to 'ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/Ry' to 'ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/Rz' to 'ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/dt' to 'ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'computeTempFPGA/numiter' to 'ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on function 'computeTempFPGA' to 'ap_ctrl_hs'.
+INFO: [RTGEN 206-100] Generating core module 'dadddsub_64ns_64ns_64_5_full_dsp_1': 1 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'dmul_64ns_64ns_64_5_max_dsp_1': 2 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'fadd_32ns_32ns_32_5_full_dsp_1': 1 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'fdiv_32ns_32ns_32_10_no_dsp_1': 2 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'fmul_32ns_32ns_32_4_max_dsp_1': 2 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'fpext_32ns_64_2_no_dsp_1': 2 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'fptrunc_64ns_32_2_no_dsp_1': 1 instance(s).
+INFO
