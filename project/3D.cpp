@@ -6,22 +6,7 @@
 #include <sys/time.h>
 #include <string.h>
 
-#define STR_SIZE (256)
-#define MAX_PD	(3.0e6)
-/* required precision in degrees	*/
-#define PRECISION	0.001
-#define SPEC_HEAT_SI 1.75e6
-#define K_SI 100
-/* capacitance fitting factor	*/
-#define FACTOR_CHIP	0.5
-
-
-/* chip parameters	*/
-float t_chip = 0.0005;
-float chip_height = 0.016; float chip_width = 0.016; 
-/* ambient temperature, assuming no package at all	*/
-float amb_temp = 80.0;
-
+#include "3D.h"
 
 
 void computeTempFPGA(float *pIn, float* tIn, float *tOut, 
@@ -30,6 +15,7 @@ void computeTempFPGA(float *pIn, float* tIn, float *tOut,
         float dt, int numiter) 
 {   float ce, cw, cn, cs, ct, cb, cc;
     float stepDivCap = dt / Cap;
+    float amb_temp = 80.0;
     ce = cw =stepDivCap/ Rx;
     cn = cs =stepDivCap/ Ry;
     ct = cb =stepDivCap/ Rz;

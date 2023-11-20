@@ -5,6 +5,7 @@
 #include <math.h> 
 #include <sys/time.h>
 #include <string.h>
+#include <omp.h>
 
 #include "3D.h"
 
@@ -34,20 +35,24 @@ void readinput(float *vect, int grid_rows, int grid_cols, int layers, char *file
     FILE *fp;
     char str[STR_SIZE];
     float val;
+    char err_msg_1[] = "The file was not opened";
+    char err_msg_2[] = "Error reading file\n";
+    char err_msg_3[] = "not enough lines in file";
+    char err_msg_4[] = "invalid file format";
 
     if( (fp  = fopen(file, "r" )) ==0 )
-      fatal( "The file was not opened" );
+      fatal(err_msg_1 );
 
 
     for (i=0; i <= grid_rows-1; i++) 
       for (j=0; j <= grid_cols-1; j++)
         for (k=0; k <= layers-1; k++)
           {
-            if (fgets(str, STR_SIZE, fp) == NULL) fatal("Error reading file\n");
+            if (fgets(str, STR_SIZE, fp) == NULL) fatal(err_msg_2);
             if (feof(fp))
-              fatal("not enough lines in file");
+              fatal(err_msg_3);
             if ((sscanf(str, "%f", &val) != 1))
-              fatal("invalid file format");
+              fatal(err_msg_4);
             vect[i*grid_cols+j+k*grid_rows*grid_cols] = val;
           }
 
@@ -156,7 +161,7 @@ void computeTempOMP(float *pIn, float* tIn, float *tOut,
         float *tOut_t = tOut;
 
 #pragma omp master
-        printf("%d threads running\n", omp_get_num_threads());
+        //printf("%d threads running\n", omp_get_num_threads());
 
         do {
             int z; 
@@ -205,21 +210,21 @@ void usage(int argc, char **argv)
 
 int main(int argc, char** argv)
 {
-    if (argc != 7)
+    /*if (argc != 7)
     {
         usage(argc,argv);
-    }
+    }*/
 
-    char *pfile, *tfile, *ofile;// *testFile;
-    int iterations = atoi(argv[3]);
+    //char *pfile, *tfile, *ofile;// *testFile;
+    int iterations = 100;
 
-    pfile = argv[4];
-    tfile = argv[5];
-    ofile = argv[6];
+    char pfile[] = "/ugrad/1/kmokaya/hotspot3D-hls/project/data/power_512x8";
+    char tfile[] = "/ugrad/1/kmokaya/hotspot3D-hls/project/data/temp_512x8";
+    char ofile[] = "output.out";
     //testFile = argv[7];
-    int numCols = atoi(argv[1]);
-    int numRows = atoi(argv[1]);
-    int layers = atoi(argv[2]);
+    int numCols = 512;
+    int numRows = 512;
+    int layers = 8;
 
     /* calculating parameters*/
 
@@ -257,7 +262,7 @@ int main(int argc, char** argv)
     struct timeval start, stop;
     float time, CPU_time;
     gettimeofday(&start,NULL);
-    computeTempOMP(powerIn, tempIn, tempOut, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt,iterations);
+    computeTempFPGA(powerIn, tempIn, tempOut, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt,iterations);
     gettimeofday(&stop,NULL);
     time = (stop.tv_usec-start.tv_usec)*1.0e-6 + stop.tv_sec - start.tv_sec;
 
