@@ -6,10 +6,15 @@
 #include <sys/time.h>
 #include <string.h>
 
-#define BUFFER_SIZE ... // Maximum buffer size
+#define NX 512  // Fixed x-dimension
+#define NY 512  // Fixed y-dimension
+#define NZ 8    // Fixed z-dimension
 
-/* ambient temperature, assuming no package at all	*/
-float amb_temp = 80.0;
+#define TILE_WIDTH 512   // Full width
+#define TILE_HEIGHT 64   // Height of each tile, as an example
+#define TILE_DEPTH 8     // Full depth
+
+#define BUFFER_SIZE (TILE_WIDTH * TILE_HEIGHT * TILE_DEPTH)
 
 // load in
 void load_in(float *in, float local_in[BUFFER_SIZE], int size) {
@@ -34,8 +39,12 @@ void store(float* output, float local_buffer[BUFFER_SIZE], int size) {
     }
 }
 
-void compute(float local_pIn[BUFFER_SIZE], float local_tIn[BUFFER_SIZE], float local_tOut[BUFFER_SIZE], 
-             int nx, int ny, int nz, float Cap, float Rx, float Ry, float Rz, float dt, int numiter) {
+void compute(float local_pIn[TILE_WIDTH * TILE_HEIGHT * TILE_DEPTH], 
+             float local_tIn[TILE_WIDTH * TILE_HEIGHT * TILE_DEPTH], 
+             float local_tOut[TILE_WIDTH * TILE_HEIGHT * TILE_DEPTH],
+             float Cap, float Rx, float Ry, float Rz, float dt, int numiter) {
+    
+    float amb_temp = 80.0;
     float ce, cw, cn, cs, ct, cb, cc;
     float stepDivCap = dt / Cap;
     ce = cw = stepDivCap / Rx;
@@ -44,64 +53,48 @@ void compute(float local_pIn[BUFFER_SIZE], float local_tIn[BUFFER_SIZE], float l
     cc = 1.0 - (2.0 * ce + 2.0 * cn + 3.0 * ct);
 
     for (int iter = 0; iter < numiter; iter++) {
-        for (int z = 0; z < nz; z++) {
-            for (int y = 0; y < ny; y++) {
-                for (int x = 0; x < nx; x++) {
+        for (int z = 0; z < TILE_DEPTH; z++) {
+            for (int y = 0; y < TILE_HEIGHT; y++) {
+                for (int x = 0; x < TILE_WIDTH; x++) {
                     //#pragma HLS PIPELINE
-                    int c = x + y * nx + z * nx * ny;
+                    int c = x + y * TILE_WIDTH + z * TILE_WIDTH * TILE_HEIGHT;
                     int w = (x == 0) ? c : c - 1;
-                    int e = (x == nx - 1) ? c : c + 1;
-                    int n = (y == 0) ? c : c - nx;
-                    int s = (y == ny - 1) ? c : c + nx;
-                    int b = (z == 0) ? c : c - nx * ny;
-                    int t = (z == nz - 1) ? c : c + nx * ny;
+                    int e = (x == TILE_WIDTH - 1) ? c : c + 1;
+                    int n = (y == 0) ? c : c - TILE_WIDTH;
+                    int s = (y == TILE_HEIGHT - 1) ? c : c + TILE_WIDTH;
+                    int b = (z == 0) ? c : c - TILE_WIDTH * TILE_HEIGHT;
+                    int t = (z == TILE_DEPTH - 1) ? c : c + TILE_WIDTH * TILE_HEIGHT;
 
-                    local_tOut[c] = local_tIn[c] * cc + local_tIn[n] * cn + local_tIn[s] * cs + 
-                                    local_tIn[e] * ce + local_tIn[w] * cw + local_tIn[t] * ct + 
+                    local_tOut[c] = local_tIn[c] * cc + local_tIn[n] * cn + local_tIn[s] * cs +
+                                    local_tIn[e] * ce + local_tIn[w] * cw + local_tIn[t] * ct +
                                     local_tIn[b] * cb + (dt / Cap) * local_pIn[c] + ct * amb_temp;
                 }
             }
         }
-
         // Swap buffers: Copy local_tOut to local_tIn for next iteration
-        for (int i = 0; i < BUFFER_SIZE; i++) {
+        for (int i = 0; i < TILE_WIDTH * TILE_HEIGHT * TILE_DEPTH; i++) {
             //#pragma HLS PIPELINE
             local_tIn[i] = local_tOut[i];
         }
     }
 }
 
-void hotspot(float *pIn, float* tIn, float *tOut, int nx, int ny, int nz, float Cap, float Rx, float Ry, float Rz, float dt, int numiter) {
+void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry, float Rz, float dt, int numiter) {
     // TODO:
     // Implement halo handling
-
-    // Tile dimensions (to be calculated)
-    int tileWidth, tileHeight, tileDepth;
-
-    // Calculate tile dimensions based on dataset size and buffer constraints
-    // Example calculation (adjust as needed based on BUFFER_SIZE and dataset properties)
-    tileWidth = nx;  // Full width
-    tileDepth = nz;  // Full depth
-    tileHeight = BUFFER_SIZE / (tileWidth * tileDepth * sizeof(float)); // Calculate height
-
-    // Ensure tileHeight is within dataset bounds
-    if (tileHeight > ny) {
-        tileHeight = ny;
-    }
-
-    float local_pIn[tileWidth * tileHeight * tileDepth];
-    float local_tIn[tileWidth * tileHeight * tileDepth];
-    float local_tOut[tileWidth * tileHeight * tileDepth];
+    float local_pIn[BUFFER_SIZE];
+    float local_tIn[BUFFER_SIZE];
+    float local_tOut[BUFFER_SIZE];
 
     // Iterate over tiles in the y-dimension
-    for (int yTile = 0; yTile < ny; yTile += tileHeight) {
-        int actualTileHeight = (yTile + tileHeight <= ny) ? tileHeight : ny - yTile;
-        int tileOffset = yTile * nx * nz;
-        int tileSize = tileWidth * actualTileHeight * tileDepth;
+    for (int yTile = 0; yTile < NY; yTile += TILE_HEIGHT) {
+        int actualTileHeight = (yTile + TILE_HEIGHT <= NY) ? TILE_HEIGHT : NY - yTile;
+        int tileOffset = yTile * NX * NZ;
+        int tileSize = TILE_WIDTH * actualTileHeight * TILE_DEPTH;
 
         // Load, compute, store for each tile
         load(&pIn[tileOffset], &tIn[tileOffset], local_pIn, local_tIn, tileSize);
-        compute(local_pIn, local_tIn, local_tOut, tileWidth, actualTileHeight, tileDepth, Cap, Rx, Ry, Rz, dt, numiter);
+        compute(local_pIn, local_tIn, local_tOut, TILE_WIDTH, actualTileHeight, TILE_DEPTH, Cap, Rx, Ry, Rz, dt, numiter);
         store(&tOut[tileOffset], local_tOut, tileSize);
     }
 }
