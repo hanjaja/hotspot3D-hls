@@ -25,6 +25,8 @@ float chip_height = 0.016; float chip_width = 0.016;
 /* ambient temperature, assuming no package at all	*/
 float amb_temp = 80.0;
 
+
+
 void fatal(char *s)
 {
     fprintf(stderr, "Error: %s\n", s);

@@ -26,9 +26,13 @@ void computeTempFPGA(float *pIn, float* tIn, float *tOut,
     int x,y,z;
     int i = 0;
     do{
+        #pragma HLS loop_tripcount min=1 max=100
         for(z = 0; z < nz; z++)
+        #pragma HLS loop_tripcount min=1 max=8
             for(y = 0; y < ny; y++)
+            #pragma HLS loop_tripcount min=1 max=512
                 for(x = 0; x < nx; x++)
+                #pragma HLS loop_tripcount min=1 max=512
                 {
                     c = x + y * nx + z * nx * ny;
 
