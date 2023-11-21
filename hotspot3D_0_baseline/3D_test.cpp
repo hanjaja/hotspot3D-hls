@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <string.h>
 #include <omp.h>
+#include <experimental/filesystem>
 
 #include "3D.h"
 
@@ -220,8 +221,8 @@ int main(int argc, char** argv)
     //char *pfile, *tfile, *ofile;// *testFile;
     int iterations = 100;
 
-    char pfile[] = "/ugrad/1/kmokaya/hotspot3D-hls/project/data/power_512x8";
-    char tfile[] = "/ugrad/1/kmokaya/hotspot3D-hls/project/data/temp_512x8";
+    char pfile[] = "/ugrad/1/kmokaya/hotspot3D-hls/data/power_512x8";
+    char tfile[] = "/ugrad/1/kmokaya/hotspot3D-hls/data/temp_512x8";
     char ofile[] = "output.out";
     //testFile = argv[7];
     int numCols = 512;
