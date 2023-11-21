@@ -10,43 +10,41 @@
 #define NY 512  // Fixed y-dimension
 #define NZ 8    // Fixed z-dimension
 
-#define TILE_WIDTH 512   // Full width
-#define TILE_HEIGHT 16 + 2  // Height of each tile + halo elements
-#define TILE_DEPTH 8     // Full depth
+#define TILE_X 512   // Full width
+#define TILE_Y 16
+#define TILE_Z 8     // Full depth
 
-#define BUFFER_SIZE (TILE_WIDTH * TILE_HEIGHT * TILE_DEPTH)
+#define BUFFER_SIZE (TILE_X * (TILE_Y + 2) * TILE_Z)
 
-#define IS_BOUNDARY 1
 #define NOT_BOUNDARY 0
+#define FIRST_TILE 1
+#define LAST_TILE 2
 
 // load in with halo
 void load_in_with_halo(float *in, float local_in[BUFFER_SIZE], int tileOffset, bool isBoundary) {
     int globalIdx, localIdx;
-    for (int z = 0; z < TILE_DEPTH; z++) {
-        for (int y = -1; y <= TILE_HEIGHT; y++) { // Halo cells included
-            for (int x = 0; x < TILE_WIDTH; x++) {
-                localIdx = (y + 1) * TILE_WIDTH + z * TILE_WIDTH * TILE_HEIGHT + x;
+    for (int z = 0; z < TILE_Z; z++) {
+        for (int y = -1; y <= TILE_Y; y++) { // Halo cells included
+            for (int x = 0; x < TILE_X; x++) {
+                localIdx = (y + 1) * TILE_X + z * TILE_X * TILE_Y + x;
 
-                // Calculate global index, adjust for halo cells
-                if (y >= 0 && y < TILE_HEIGHT) {
-                    globalIdx = tileOffset + (y * NX + z * NX * NY) + x;
+                int haloY;
+
+                if (isBoundary == FIRST_TILE) {
+                    haloY = (y == -1) ? 0 : y;
+                } else if (isBoundary == LAST_TILE) {
+                    haloY = (y == TILE_Y) ? TILE_Y - 1 : y;
                 } else {
-                    // For halo cells, mirror the edge cells
-                    int haloY = 0;
-                    if (isBoundary) {
-                        haloY = (y == -1 && tileOffset == 0) ? 0 : (y == TILE_HEIGHT && tileOffset + TILE_HEIGHT >= NY) ? TILE_HEIGHT - 1 : y;
-                    } else {
-                        haloY = (y == -1) ? y + 1 : (y == TILE_HEIGHT) ? y - 1 : y;
-                    }
-                    globalIdx = tileOffset + (haloY * NX + z * NX * NY) + x;
+                    haloY = y;
                 }
+
+                int globalIdx = tileOffset + (haloY * NX + z * NX * NY) + x;
 
                 local_in[localIdx] = in[globalIdx];
             }
         }
     }
 }
-
 
 // Combined load function with halo handling
 void load(float *pIn, float *tIn, float local_pIn[BUFFER_SIZE], float local_tIn[BUFFER_SIZE], int tileOffset, bool isBoundary) {
@@ -76,17 +74,17 @@ void compute(float local_pIn[BUFFER_SIZE],
     ct = cb = stepDivCap / Rz;
     cc = 1.0 - (2.0 * ce + 2.0 * cn + 3.0 * ct);
 
-    for (int z = 0; z < TILE_DEPTH; z++) {
-        for (int y = 1; y < TILE_HEIGHT - 1; y++) {  // Exclude halo cells
-            for (int x = 0; x < TILE_WIDTH; x++) {
+    for (int z = 0; z < TILE_Z; z++) {
+        for (int y = 1; y < TILE_Y - 1; y++) {  // Exclude halo cells
+            for (int x = 0; x < TILE_X; x++) {
                 //#pragma HLS PIPELINE
-                int c = x + y * TILE_WIDTH + z * TILE_WIDTH * TILE_HEIGHT;
+                int c = x + y * TILE_X + z * TILE_X * TILE_Y;
                 int w = c - 1;
                 int e = c + 1;
-                int n = c - TILE_WIDTH;
-                int s = c + TILE_WIDTH;
-                int b = c - TILE_WIDTH * TILE_HEIGHT;
-                int t = c + TILE_WIDTH * TILE_HEIGHT;
+                int n = c - TILE_X;
+                int s = c + TILE_X;
+                int b = c - TILE_X * TILE_Y;
+                int t = c + TILE_X * TILE_Y;
 
                 local_tOut[c] = local_tIn[c] * cc + local_tIn[n] * cn + local_tIn[s] * cs +
                                 local_tIn[e] * ce + local_tIn[w] * cw + local_tIn[t] * ct +
@@ -102,20 +100,22 @@ void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry,
     float local_tOut[BUFFER_SIZE];
 
     for (int iter = 0; iter < numiter; iter++) {
-        for (int yTile = 0; yTile < NY; yTile += TILE_HEIGHT) {
-            bool boundaryFlag = NOT_BOUNDARY;
-            if (yTile == 0 || yTile + TILE_HEIGHT >= NY) {
-                boundaryFlag = IS_BOUNDARY;
+        for (int yTile = 0; yTile < NY; yTile += TILE_Y) {
+            int boundaryFlag = NOT_BOUNDARY;
+            if (yTile == 0 ) {
+                boundaryFlag = FIRST_TILE;
+            } else if (yTile == NY - TILE_Y) {
+                boundaryFlag = LAST_TILE;
             }
 
             int tileOffset = yTile * NX * NZ;
-            int tileSize = TILE_WIDTH * TILE_HEIGHT * TILE_DEPTH;
+            int tileSize = TILE_X * TILE_Y * TILE_Z;
 
             // Load data for each tile with boundary handling
             load(&pIn[tileOffset], &tIn[tileOffset], local_pIn, local_tIn, tileOffset, boundaryFlag);
 
             // Compute temperatures for each tile
-            compute(local_pIn, local_tIn, local_tOut, TILE_WIDTH, TILE_HEIGHT, TILE_DEPTH, Cap, Rx, Ry, Rz, dt, numiter);
+            compute(local_pIn, local_tIn, local_tOut, TILE_X, TILE_Y, TILE_Z, Cap, Rx, Ry, Rz, dt, numiter);
 
             // Store only the computational region of each tile
             store(&tOut[tileOffset], local_tOut, tileSize);
