@@ -5,7 +5,6 @@
 #include <math.h> 
 #include <sys/time.h>
 #include <string.h>
-#include <omp.h>
 
 #include "3D.h"
 
@@ -18,14 +17,11 @@
 /* capacitance fitting factor	*/
 #define FACTOR_CHIP	0.5
 
-
 /* chip parameters	*/
 float t_chip = 0.0005;
 float chip_height = 0.016; float chip_width = 0.016; 
 /* ambient temperature, assuming no package at all	*/
 float amb_temp = 80.0;
-
-
 
 void fatal(char *s)
 {
@@ -62,7 +58,6 @@ void readinput(float *vect, int grid_rows, int grid_cols, int layers, char *file
 
 }
 
-
 void writeoutput(float *vect, int grid_rows, int grid_cols, int layers, char *file) {
 
     int i,j,k, index=0;
@@ -83,8 +78,6 @@ void writeoutput(float *vect, int grid_rows, int grid_cols, int layers, char *fi
 
     fclose(fp);	
 }
-
-
 
 void computeTempCPU(float *pIn, float* tIn, float *tOut, 
         int nx, int ny, int nz, float Cap, 
@@ -140,60 +133,13 @@ float accuracy(float *arr1, float *arr2, int len)
 
 
 }
-void computeTempOMP(float *pIn, float* tIn, float *tOut, 
-        int nx, int ny, int nz, float Cap, 
-        float Rx, float Ry, float Rz, 
-        float dt, int numiter) 
-{  
 
-    float ce, cw, cn, cs, ct, cb, cc;
-
-    float stepDivCap = dt / Cap;
-    ce = cw =stepDivCap/ Rx;
-    cn = cs =stepDivCap/ Ry;
-    ct = cb =stepDivCap/ Rz;
-
-    cc = 1.0 - (2.0*ce + 2.0*cn + 3.0*ct);
-
-
-#pragma omp parallel
-    {
-        int count = 0;
-        float *tIn_t = tIn;
-        float *tOut_t = tOut;
-
-#pragma omp master
-        //printf("%d threads running\n", omp_get_num_threads());
-
-        do {
-            int z; 
-#pragma omp for 
-            for (z = 0; z < nz; z++) {
-                int y;
-                for (y = 0; y < ny; y++) {
-                    int x;
-                    for (x = 0; x < nx; x++) {
-                        int c, w, e, n, s, b, t;
-                        c =  x + y * nx + z * nx * ny;
-                        w = (x == 0)    ? c : c - 1;
-                        e = (x == nx-1) ? c : c + 1;
-                        n = (y == 0)    ? c : c - nx;
-                        s = (y == ny-1) ? c : c + nx;
-                        b = (z == 0)    ? c : c - nx * ny;
-                        t = (z == nz-1) ? c : c + nx * ny;
-                        tOut_t[c] = cc * tIn_t[c] + cw * tIn_t[w] + ce * tIn_t[e]
-                            + cs * tIn_t[s] + cn * tIn_t[n] + cb * tIn_t[b] + ct * tIn_t[t]+(dt/Cap) * pIn[c] + ct*amb_temp;
-                    }
-                }
-            }
-            float *t = tIn_t;
-            tIn_t = tOut_t;
-            tOut_t = t; 
-            count++;
-        } while (count < numiter);
-    } 
-    return; 
-} 
+void computeTempFPGA(float *pIn, float* tIn, float *tOut, 
+                     int nx, int ny, int nz, float Cap, 
+                     float Rx, float Ry, float Rz, 
+                     float dt, int numiter) {
+    hotspot(pIn, tIn, tOut, Cap, Rx, Ry, Rz, dt, numiter);
+}
 
 void usage(int argc, char **argv)
 {
@@ -207,8 +153,6 @@ void usage(int argc, char **argv)
     fprintf(stderr, "\t<outputFile - output file\n");
     exit(1);
 }
-
-
 
 int main(int argc, char** argv)
 {
@@ -263,24 +207,28 @@ int main(int argc, char** argv)
 
     struct timeval start, stop;
     float time, CPU_time;
-    gettimeofday(&start,NULL);
-    computeTempFPGA(powerIn, tempIn, tempOut, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt,iterations);
-    gettimeofday(&stop,NULL);
-    time = (stop.tv_usec-start.tv_usec)*1.0e-6 + stop.tv_sec - start.tv_sec;
 
+    // FPGA execution
     gettimeofday(&start,NULL);
-    computeTempCPU(powerIn, tempCopy, answer, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt,iterations);
+    computeTempFPGA(powerIn, tempIn, tempOut, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt, iterations);
     gettimeofday(&stop,NULL);
-    CPU_time = (stop.tv_usec-start.tv_usec)*1.0e-6 + stop.tv_sec - start.tv_sec;
+    time = (stop.tv_usec - start.tv_usec) * 1.0e-6 + stop.tv_sec - start.tv_sec;
 
-    float acc = accuracy(tempOut,answer,numRows*numCols*layers);
-    printf("Time: %.3f (s)\n",time);
-    printf("CPU Time: %.3f (s)\n",CPU_time);
-    printf("Accuracy: %e\n",acc);
-    writeoutput(tempOut,numRows, numCols, layers, ofile);
-    free(tempIn);
-    free(tempOut); free(powerIn);
+    // CPU execution
+    gettimeofday(&start,NULL);
+    computeTempCPU(powerIn, tempCopy, answer, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt, iterations);
+    gettimeofday(&stop,NULL);
+    CPU_time = (stop.tv_usec - start.tv_usec) * 1.0e-6 + stop.tv_sec - start.tv_sec;
+
+    // Accuracy and timing comparison
+    float acc = accuracy(tempOut, answer, numRows * numCols * layers);
+    printf("FPGA Time: %.3f (s)\n", time);
+    printf("CPU Time: %.3f (s)\n", CPU_time);
+    printf("Accuracy: %e\n", acc);
+
+    // Write output and cleanup
+    writeoutput(tempOut, numRows, numCols, layers, ofile);
+    free(tempIn); free(tempOut); free(powerIn); free(answer); free(tempCopy);
+
     return 0;
 }	
-
-
