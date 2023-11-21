@@ -32,7 +32,12 @@ void load_in_with_halo(float *in, float local_in[BUFFER_SIZE], int tileOffset, b
                     globalIdx = tileOffset + (y * NX + z * NX * NY) + x;
                 } else {
                     // For halo cells, mirror the edge cells
-                    int mirroredY = (y == -1) ? 0 : TILE_HEIGHT - 1;
+                    int haloY = 0;
+                    if (isBoundary) {
+                        haloY = (y == -1 && tileOffset == 0) ? 0 : (y == TILE_HEIGHT && tileOffset + TILE_HEIGHT >= NY) ? TILE_HEIGHT - 1 : y;
+                    } else {
+                        haloY = (y == -1) ? y + 1 : (y == TILE_HEIGHT) ? y - 1 : y;
+                    }
                     globalIdx = tileOffset + (mirroredY * NX + z * NX * NY) + x;
                 }
 
@@ -44,9 +49,8 @@ void load_in_with_halo(float *in, float local_in[BUFFER_SIZE], int tileOffset, b
 
 
 // Combined load function with halo handling
-void load(float *pIn, float *tIn, float local_pIn[BUFFER_SIZE], float local_tIn[BUFFER_SIZE], int yTile, bool isBoundary) {
+void load(float *pIn, float *tIn, float local_pIn[BUFFER_SIZE], float local_tIn[BUFFER_SIZE], int tileOffset, bool isBoundary) {
     #pragma HLS DATAFLOW
-    int tileOffset = yTile * NX * NZ;
     load_in_with_halo(pIn, local_pIn, tileOffset, isBoundary);
     load_in_with_halo(tIn, local_tIn, tileOffset, isBoundary);
 }
@@ -108,7 +112,7 @@ void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry,
             int tileSize = TILE_WIDTH * TILE_HEIGHT * TILE_DEPTH;
 
             // Load data for each tile with boundary handling
-            load(&pIn[tileOffset], &tIn[tileOffset], local_pIn, local_tIn, tileSize, boundaryFlag);
+            load(&pIn[tileOffset], &tIn[tileOffset], local_pIn, local_tIn, tileOffset, boundaryFlag);
 
             // Compute temperatures for each tile
             compute(local_pIn, local_tIn, local_tOut, TILE_WIDTH, TILE_HEIGHT, TILE_DEPTH, Cap, Rx, Ry, Rz, dt, numiter);
