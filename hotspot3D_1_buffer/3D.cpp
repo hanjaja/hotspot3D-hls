@@ -15,10 +15,23 @@
 #define TILE_Z 8     // Full depth
 
 #define BUFFER_SIZE (TILE_X * (TILE_Y + 2) * TILE_Z)
+#define POWER_BUFFER_SIZE (TILE_X * TILE_Y * TILE_Z)
 
 #define NOT_BOUNDARY 0
 #define FIRST_TILE 1
 #define LAST_TILE 2
+
+void load_power(float *pIn, float local_pIn[POWER_BUFFER_SIZE], int tileOffset) {
+    for (int z = 0; z < TILE_Z; z++) {
+        for (int y = 0; y < TILE_Y; y++) {
+            for (int x = 0; x < TILE_X; x++) {
+                int localIdx = y * TILE_X + z * TILE_X * TILE_Y + x;
+                int globalIdx = tileOffset + (y * NX + z * NX * NY) + x;
+                local_pIn[localIdx] = pIn[globalIdx];
+            }
+        }
+    }
+}
 
 // load in with halo
 void load_in_with_halo(float *in, float local_in[BUFFER_SIZE], int tileOffset, bool isBoundary) {
@@ -38,7 +51,7 @@ void load_in_with_halo(float *in, float local_in[BUFFER_SIZE], int tileOffset, b
                     haloY = y;
                 }
 
-                int globalIdx = tileOffset + (haloY * NX + z * NX * NY) + x;
+                globalIdx = tileOffset + (haloY * NX + z * NX * NY) + x;
 
                 local_in[localIdx] = in[globalIdx];
             }
@@ -47,9 +60,9 @@ void load_in_with_halo(float *in, float local_in[BUFFER_SIZE], int tileOffset, b
 }
 
 // Combined load function with halo handling
-void load(float *pIn, float *tIn, float local_pIn[BUFFER_SIZE], float local_tIn[BUFFER_SIZE], int tileOffset, bool isBoundary) {
+void load(float *pIn, float *tIn, float local_pIn[POWER_BUFFER_SIZE], float local_tIn[BUFFER_SIZE], int tileOffset, bool isBoundary) {
     #pragma HLS DATAFLOW
-    load_in_with_halo(pIn, local_pIn, tileOffset, isBoundary);
+    load_power(pIn, local_pIn, tileOffset);
     load_in_with_halo(tIn, local_tIn, tileOffset, isBoundary);
 }
 
@@ -61,7 +74,7 @@ void store(float* output, float local_buffer[BUFFER_SIZE], int size) {
     }
 }
 
-void compute(float local_pIn[BUFFER_SIZE], 
+void compute(float local_pIn[POWER_BUFFER_SIZE], 
              float local_tIn[BUFFER_SIZE], 
              float local_tOut[BUFFER_SIZE],
              float Cap, float Rx, float Ry, float Rz, float dt, 
@@ -75,16 +88,16 @@ void compute(float local_pIn[BUFFER_SIZE],
     cc = 1.0 - (2.0 * ce + 2.0 * cn + 3.0 * ct);
 
     for (int z = 0; z < TILE_Z; z++) {
-        for (int y = 1; y < TILE_Y - 1; y++) {  // Exclude halo cells
+        for (int y = 1; y < TILE_Y + 1; y++) {  // Exclude halo cells
             for (int x = 0; x < TILE_X; x++) {
                 //#pragma HLS PIPELINE
-                int c = x + y * TILE_X + z * TILE_X * TILE_Y;
+                int c = x + y * TILE_X + z * TILE_X * (TILE_Y + 2);
                 int w = c - 1;
                 int e = c + 1;
                 int n = c - TILE_X;
                 int s = c + TILE_X;
-                int b = c - TILE_X * TILE_Y;
-                int t = c + TILE_X * TILE_Y;
+                int b = c - TILE_X * (TILE_Y + 2);
+                int t = c + TILE_X * (TILE_Y + 2);
 
                 local_tOut[c] = local_tIn[c] * cc + local_tIn[n] * cn + local_tIn[s] * cs +
                                 local_tIn[e] * ce + local_tIn[w] * cw + local_tIn[t] * ct +
@@ -95,7 +108,7 @@ void compute(float local_pIn[BUFFER_SIZE],
 }
 
 void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry, float Rz, float dt, int numiter) {
-    float local_pIn[BUFFER_SIZE];
+    float local_pIn[POWER_BUFFER_SIZE];
     float local_tIn[BUFFER_SIZE];
     float local_tOut[BUFFER_SIZE];
 
