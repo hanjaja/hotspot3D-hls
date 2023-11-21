@@ -38,7 +38,7 @@ void load_in_with_halo(float *in, float local_in[BUFFER_SIZE], int tileOffset, b
                     } else {
                         haloY = (y == -1) ? y + 1 : (y == TILE_HEIGHT) ? y - 1 : y;
                     }
-                    globalIdx = tileOffset + (mirroredY * NX + z * NX * NY) + x;
+                    globalIdx = tileOffset + (haloY * NX + z * NX * NY) + x;
                 }
 
                 local_in[localIdx] = in[globalIdx];
