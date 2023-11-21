@@ -14,8 +14,8 @@
 #define TILE_Y 16
 #define TILE_Z 8     // Full depth
 
-#define BUFFER_SIZE (TILE_X * (TILE_Y + 2) * TILE_Z)
-#define POWER_BUFFER_SIZE (TILE_X * TILE_Y * TILE_Z)
+#define HALO_BUFFER_SIZE (TILE_X * (TILE_Y + 2) * TILE_Z)
+#define BUFFER_SIZE (TILE_X * TILE_Y * TILE_Z)
 
 #define NOT_BOUNDARY 0
 #define FIRST_TILE 1
@@ -66,16 +66,8 @@ void load(float *pIn, float *tIn, float local_pIn[POWER_BUFFER_SIZE], float loca
     load_in_with_halo(tIn, local_tIn, tileOffset, isBoundary);
 }
 
-// Store function
-void store(float* output, float local_buffer[BUFFER_SIZE], int size) {
-    for (int i = 0; i < size; i++) {
-        //#pragma HLS PIPELINE
-        output[i] = local_buffer[i];
-    }
-}
-
-void compute(float local_pIn[POWER_BUFFER_SIZE], 
-             float local_tIn[BUFFER_SIZE], 
+void compute(float local_pIn[BUFFER_SIZE], 
+             float local_tIn[HALO_BUFFER_SIZE], 
              float local_tOut[BUFFER_SIZE],
              float Cap, float Rx, float Ry, float Rz, float dt) {
     
@@ -91,6 +83,7 @@ void compute(float local_pIn[POWER_BUFFER_SIZE],
             for (int x = 0; x < TILE_X; x++) {
                 //#pragma HLS PIPELINE
                 int c = x + y * TILE_X + z * TILE_X * (TILE_Y + 2);
+                
                 int w = c - 1;
                 int e = c + 1;
                 int n = c - TILE_X;
@@ -98,11 +91,21 @@ void compute(float local_pIn[POWER_BUFFER_SIZE],
                 int b = c - TILE_X * (TILE_Y + 2);
                 int t = c + TILE_X * (TILE_Y + 2);
 
-                local_tOut[c] = local_tIn[c] * cc + local_tIn[n] * cn + local_tIn[s] * cs +
+                int c_no_halo = x + (y - 1) * TILE_X + z * TILE_X * TILE_Y;
+
+                local_tOut[c_no_halo] = local_tIn[c] * cc + local_tIn[n] * cn + local_tIn[s] * cs +
                                 local_tIn[e] * ce + local_tIn[w] * cw + local_tIn[t] * ct +
                                 local_tIn[b] * cb + (dt / Cap) * local_pIn[c];
             }
         }
+    }
+}
+
+// Store function
+void store(float* tOut, float local_tOut[BUFFER_SIZE]) {
+    for (int i = 0; i < BUFFER_SIZE; i++) {
+        //#pragma HLS PIPELINE
+        tOut[i] = local_tOut[i];
     }
 }
 
