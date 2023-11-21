@@ -127,7 +127,7 @@ void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry,
             load(&pIn[tileOffset], &tIn[tileOffset], local_pIn, local_tIn, tileOffset, boundaryFlag);
 
             // Compute temperatures for each tile
-            compute(local_pIn, local_tIn, local_tOut, TILE_X, TILE_Y, TILE_Z, Cap, Rx, Ry, Rz, dt);
+            compute(local_pIn, local_tIn, local_tOut, Cap, Rx, Ry, Rz, dt);
 
             // Store only the computational region of each tile
             store(&tOut[tileOffset], local_tOut, tileSize);
