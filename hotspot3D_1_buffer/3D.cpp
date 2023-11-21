@@ -25,7 +25,7 @@ void load_in_with_halo(float *in, float local_in[BUFFER_SIZE], int tileOffset, b
     for (int z = 0; z < TILE_DEPTH; z++) {
         for (int y = -1; y <= TILE_HEIGHT; y++) { // Halo cells included
             for (int x = 0; x < TILE_WIDTH; x++) {
-                localIdx = (y + 1) * TILE_WIDTH + z * TILE_WIDTH * (TILE_HEIGHT + 2) + x;
+                localIdx = (y + 1) * TILE_WIDTH + z * TILE_WIDTH * TILE_HEIGHT + x;
 
                 // Calculate global index, adjust for halo cells
                 if (y >= 0 && y < TILE_HEIGHT) {
