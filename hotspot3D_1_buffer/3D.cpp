@@ -21,7 +21,7 @@
 #define FIRST_TILE 1
 #define LAST_TILE 2
 
-void load_power(float *pIn, float local_pIn[POWER_BUFFER_SIZE], int tileOffset) {
+void load_power(float *pIn, float local_pIn[BUFFER_SIZE], int tileOffset) {
     for (int z = 0; z < TILE_Z; z++) {
         for (int y = 0; y < TILE_Y; y++) {
             for (int x = 0; x < TILE_X; x++) {
@@ -34,7 +34,7 @@ void load_power(float *pIn, float local_pIn[POWER_BUFFER_SIZE], int tileOffset) 
 }
 
 // load in with halo
-void load_in_with_halo(float *in, float local_in[BUFFER_SIZE], int tileOffset, bool isBoundary) {
+void load_in_with_halo(float *in, float local_in[HALO_BUFFER_SIZE], int tileOffset, bool isBoundary) {
     int globalIdx, localIdx;
     for (int z = 0; z < TILE_Z; z++) {
         for (int y = -1; y <= TILE_Y; y++) { // Halo cells included
@@ -60,7 +60,7 @@ void load_in_with_halo(float *in, float local_in[BUFFER_SIZE], int tileOffset, b
 }
 
 // Combined load function with halo handling
-void load(float *pIn, float *tIn, float local_pIn[POWER_BUFFER_SIZE], float local_tIn[BUFFER_SIZE], int tileOffset, bool isBoundary) {
+void load(float *pIn, float *tIn, float local_pIn[BUFFER_SIZE], float local_tIn[HALO_BUFFER_SIZE], int tileOffset, bool isBoundary) {
     #pragma HLS DATAFLOW
     load_power(pIn, local_pIn, tileOffset);
     load_in_with_halo(tIn, local_tIn, tileOffset, isBoundary);
@@ -110,8 +110,8 @@ void store(float* tOut, float local_tOut[BUFFER_SIZE]) {
 }
 
 void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry, float Rz, float dt, int numiter) {
-    float local_pIn[POWER_BUFFER_SIZE];
-    float local_tIn[BUFFER_SIZE];
+    float local_pIn[BUFFER_SIZE];
+    float local_tIn[HALO_BUFFER_SIZE];
     float local_tOut[BUFFER_SIZE];
 
     for (int iter = 0; iter < numiter; iter++) {
