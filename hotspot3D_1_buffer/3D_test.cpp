@@ -134,8 +134,7 @@ float accuracy(float *arr1, float *arr2, int len)
 
 }
 
-void computeTempFPGA(float *pIn, float* tIn, float *tOut, 
-                     int nx, int ny, int nz, float Cap, 
+void computeTempFPGA(float *pIn, float* tIn, float *tOut, float Cap, 
                      float Rx, float Ry, float Rz, 
                      float dt, int numiter) {
     hotspot(pIn, tIn, tOut, Cap, Rx, Ry, Rz, dt, numiter);
@@ -164,8 +163,8 @@ int main(int argc, char** argv)
     //char *pfile, *tfile, *ofile;// *testFile;
     int iterations = 100;
 
-    char pfile[] = "/ugrad/1/kmokaya/hotspot3D-hls/project/data/power_512x8";
-    char tfile[] = "/ugrad/1/kmokaya/hotspot3D-hls/project/data/temp_512x8";
+    char pfile[] = "/localhome/drashid/ENSC453/hotspot3D-hls/data/power_512x8";
+    char tfile[] = "/localhome/drashid/ENSC453/hotspot3D-hls/data/temp_512x8";
     char ofile[] = "output.out";
     //testFile = argv[7];
     int numCols = 512;
@@ -210,7 +209,7 @@ int main(int argc, char** argv)
 
     // FPGA execution
     gettimeofday(&start,NULL);
-    computeTempFPGA(powerIn, tempIn, tempOut, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt, iterations);
+    computeTempFPGA(powerIn, tempIn, tempOut, Cap, Rx, Ry, Rz, dt, iterations);
     gettimeofday(&stop,NULL);
     time = (stop.tv_usec - start.tv_usec) * 1.0e-6 + stop.tv_sec - start.tv_sec;
 

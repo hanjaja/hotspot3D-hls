@@ -1,8 +1,7 @@
 #ifndef _H_3D_H_
 #define _H_3D_H_
 
-void hotspot(float *pIn, float* tIn, float *tOut, 
-        int nx, int ny, int nz, float Cap, 
+void hotspot(float *pIn, float* tIn, float *tOut, float Cap, 
         float Rx, float Ry, float Rz, 
         float dt, int numiter);
 
