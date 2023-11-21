@@ -39,7 +39,7 @@ void load_in_with_halo(float *in, float local_in[BUFFER_SIZE], int tileOffset, b
     for (int z = 0; z < TILE_Z; z++) {
         for (int y = -1; y <= TILE_Y; y++) { // Halo cells included
             for (int x = 0; x < TILE_X; x++) {
-                localIdx = (y + 1) * TILE_X + z * TILE_X * TILE_Y + x;
+                localIdx = (y + 1) * TILE_X + z * TILE_X * (TILE_Y + 2) + x;
 
                 int haloY;
 
