@@ -4,7 +4,7 @@
 # open the HLS project 3D.prj
 open_project 3D.prj -reset
 # set the top-level function of the design to be fir
-set_top computeTempFPGA
+set_top hotspot
 # add design files
 add_files 3D.cpp
 # add the testbench files

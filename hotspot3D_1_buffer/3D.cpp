@@ -21,20 +21,22 @@
 #define FIRST_TILE 1
 #define LAST_TILE 2
 
+#define AMB_TEMP 80.0
+
 void load_power(float *pIn, float local_pIn[BUFFER_SIZE], int tileOffset) {
     for (int z = 0; z < TILE_Z; z++) {
         for (int y = 0; y < TILE_Y; y++) {
             for (int x = 0; x < TILE_X; x++) {
                 int localIdx = y * TILE_X + z * TILE_X * TILE_Y + x;
                 int globalIdx = tileOffset + (y * NX + z * NX * NY) + x;
-                local_pIn[localIdx] = pIn[globalIdx];
+                local_pIn[localIdx] = pIn[globalIdx];                
             }
         }
     }
 }
 
 // load in with halo
-void load_in_with_halo(float *in, float local_in[HALO_BUFFER_SIZE], int tileOffset, bool isBoundary) {
+void load_in_with_halo(float *in, float local_in[HALO_BUFFER_SIZE], int tileOffset, int isBoundary) {
     int globalIdx, localIdx;
     for (int z = 0; z < TILE_Z; z++) {
         for (int y = -1; y <= TILE_Y; y++) { // Halo cells included
@@ -95,17 +97,22 @@ void compute(float local_pIn[BUFFER_SIZE],
 
                 local_tOut[c_no_halo] = local_tIn[c] * cc + local_tIn[n] * cn + local_tIn[s] * cs +
                                 local_tIn[e] * ce + local_tIn[w] * cw + local_tIn[t] * ct +
-                                local_tIn[b] * cb + (dt / Cap) * local_pIn[c];
+                                local_tIn[b] * cb + (dt / Cap) * local_pIn[c_no_halo] + ct * AMB_TEMP;
             }
         }
     }
 }
 
 // Store function
-void store(float* tOut, float local_tOut[BUFFER_SIZE]) {
-    for (int i = 0; i < BUFFER_SIZE; i++) {
-        //#pragma HLS PIPELINE
-        tOut[i] = local_tOut[i];
+void store(float* tOut, float local_tOut[BUFFER_SIZE], int tileOffset) {
+    for (int z = 0; z < TILE_Z; z++) {
+        for (int y = 0; y < TILE_Y; y++) {
+            for (int x = 0; x < TILE_X; x++) {
+                int localIdx = y * TILE_X + z * TILE_X * TILE_Y + x;
+                int globalIdx = tileOffset + (y * NX + z * NX * NY) + x;                
+                tOut[globalIdx] = local_tOut[localIdx];           
+            }
+        }
     }
 }
 
@@ -123,17 +130,17 @@ void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry,
                 boundaryFlag = LAST_TILE;
             }
 
-            int tileOffset = yTile * NX * NZ;
+            int tileOffset = yTile * NX;
             int tileSize = TILE_X * TILE_Y * TILE_Z;
 
             // Load data for each tile with boundary handling
-            load(&pIn[tileOffset], &tIn[tileOffset], local_pIn, local_tIn, tileOffset, boundaryFlag);
+            load(pIn, tIn, local_pIn, local_tIn, tileOffset, boundaryFlag);
 
             // Compute temperatures for each tile
             compute(local_pIn, local_tIn, local_tOut, Cap, Rx, Ry, Rz, dt);
 
             // Store only the computational region of each tile
-            store(&tOut[tileOffset], local_tOut, tileSize);
+            store(tOut, local_tOut, tileOffset);
         }
 
         // Swap input and output buffers for the next iteration
