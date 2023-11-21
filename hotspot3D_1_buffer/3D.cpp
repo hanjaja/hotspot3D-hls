@@ -77,8 +77,7 @@ void store(float* output, float local_buffer[BUFFER_SIZE], int size) {
 void compute(float local_pIn[POWER_BUFFER_SIZE], 
              float local_tIn[BUFFER_SIZE], 
              float local_tOut[BUFFER_SIZE],
-             float Cap, float Rx, float Ry, float Rz, float dt, 
-             int numiter) {
+             float Cap, float Rx, float Ry, float Rz, float dt) {
     
     float ce, cw, cn, cs, ct, cb, cc;
     float stepDivCap = dt / Cap;
@@ -128,7 +127,7 @@ void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry,
             load(&pIn[tileOffset], &tIn[tileOffset], local_pIn, local_tIn, tileOffset, boundaryFlag);
 
             // Compute temperatures for each tile
-            compute(local_pIn, local_tIn, local_tOut, TILE_X, TILE_Y, TILE_Z, Cap, Rx, Ry, Rz, dt, numiter);
+            compute(local_pIn, local_tIn, local_tOut, TILE_X, TILE_Y, TILE_Z, Cap, Rx, Ry, Rz, dt);
 
             // Store only the computational region of each tile
             store(&tOut[tileOffset], local_tOut, tileSize);
