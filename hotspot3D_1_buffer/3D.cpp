@@ -10,9 +10,9 @@
 #define NY 512  // Fixed y-dimension
 #define NZ 8    // Fixed z-dimension
 
-#define TILE_X 512   // Full width
+#define TILE_X NX   // Full width
 #define TILE_Y 16
-#define TILE_Z 8     // Full depth
+#define TILE_Z NZ     // Full depth
 
 #define HALO_BUFFER_SIZE (TILE_X * (TILE_Y + 2) * TILE_Z)
 #define BUFFER_SIZE (TILE_X * TILE_Y * TILE_Z)
@@ -86,12 +86,12 @@ void compute(float local_pIn[BUFFER_SIZE],
                 //#pragma HLS PIPELINE
                 int c = x + y * TILE_X + z * TILE_X * (TILE_Y + 2);
                 
-                int w = c - 1;
-                int e = c + 1;
+                int w = (x == 0) ? c      : c - 1;
+                int e = (x == TILE_X - 1) ? c : c + 1;
                 int n = c - TILE_X;
                 int s = c + TILE_X;
-                int b = c - TILE_X * (TILE_Y + 2);
-                int t = c + TILE_X * (TILE_Y + 2);
+                int b = (z == 0) ? c      : c - TILE_X * (TILE_Y + 2);
+                int t = (z == NZ - 1) ? c : c + TILE_X * (TILE_Y + 2);
 
                 int c_no_halo = x + (y - 1) * TILE_X + z * TILE_X * TILE_Y;
 

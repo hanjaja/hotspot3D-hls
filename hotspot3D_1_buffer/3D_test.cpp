@@ -67,9 +67,9 @@ void writeoutput(float *vect, int grid_rows, int grid_cols, int layers, char *fi
     if( (fp = fopen(file, "w" )) == 0 )
       printf( "The file was not opened\n" );
 
-    for (i=0; i < grid_rows; i++) 
-      for (j=0; j < grid_cols; j++)
-        for (k=0; k < layers; k++)
+    for (k=0; k < layers; k++)
+       for (i=0; i < grid_rows; i++)       
+          for (j=0; j < grid_cols; j++)
           {
             sprintf(str, "%d\t%g\n", index, vect[i*grid_cols+j+k*grid_rows*grid_cols]);
             fputs(str,fp);
@@ -165,7 +165,8 @@ int main(int argc, char** argv)
 
     char pfile[] = "/localhome/drashid/ENSC453/hotspot3D-hls/data/power_512x8";
     char tfile[] = "/localhome/drashid/ENSC453/hotspot3D-hls/data/temp_512x8";
-    char ofile[] = "output.out";
+    char ofile[] = "/localhome/drashid/ENSC453/hotspot3D-hls/data/output.out";
+    char ofile_cpu[] = "/localhome/drashid/ENSC453/hotspot3D-hls/data/output_cpu.out";
     //testFile = argv[7];
     int numCols = 512;
     int numRows = 512;
@@ -209,13 +210,13 @@ int main(int argc, char** argv)
 
     // FPGA execution
     gettimeofday(&start,NULL);
-    computeTempFPGA(powerIn, tempIn, tempOut, Cap, Rx, Ry, Rz, dt, iterations);
+    computeTempFPGA(powerIn, tempIn, tempOut, Cap, Rx, Ry, Rz, dt, 1);
     gettimeofday(&stop,NULL);
     time = (stop.tv_usec - start.tv_usec) * 1.0e-6 + stop.tv_sec - start.tv_sec;
 
     // CPU execution
     gettimeofday(&start,NULL);
-    computeTempCPU(powerIn, tempCopy, answer, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt, iterations);
+    computeTempCPU(powerIn, tempCopy, answer, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt, 1);
     gettimeofday(&stop,NULL);
     CPU_time = (stop.tv_usec - start.tv_usec) * 1.0e-6 + stop.tv_sec - start.tv_sec;
 
@@ -227,6 +228,7 @@ int main(int argc, char** argv)
 
     // Write output and cleanup
     writeoutput(tempOut, numRows, numCols, layers, ofile);
+    writeoutput(answer, numRows, numCols, layers, ofile_cpu);
     free(tempIn); free(tempOut); free(powerIn); free(answer); free(tempCopy);
 
     return 0;
