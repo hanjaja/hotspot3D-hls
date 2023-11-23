@@ -1,17 +1,7 @@
-#include <stdio.h>
-#include <time.h>
-#include <assert.h>
-#include <stdlib.h> 
-#include <math.h> 
-#include <sys/time.h>
-#include <string.h>
-
-#define NX 512  // Fixed x-dimension
-#define NY 512  // Fixed y-dimension
-#define NZ 8    // Fixed z-dimension
+#include "3D.h"
 
 #define TILE_X NX   // Full width
-#define TILE_Y 16
+#define TILE_Y 64
 #define TILE_Z NZ     // Full depth
 
 #define HALO_BUFFER_SIZE (TILE_X * (TILE_Y + 2) * TILE_Z)
@@ -63,7 +53,8 @@ void load_in_with_halo(float *in, float local_in[HALO_BUFFER_SIZE], int tileOffs
 
 // Combined load function with halo handling
 void load(float *pIn, float *tIn, float local_pIn[BUFFER_SIZE], float local_tIn[HALO_BUFFER_SIZE], int tileOffset, int isBoundary) {
-    #pragma HLS DATAFLOW
+    //#pragma HLS INLINE OFF
+    //#pragma HLS DATAFLOW
     load_power(pIn, local_pIn, tileOffset);
     load_in_with_halo(tIn, local_tIn, tileOffset, isBoundary);
 }
@@ -72,7 +63,7 @@ void compute(float local_pIn[BUFFER_SIZE],
              float local_tIn[HALO_BUFFER_SIZE], 
              float local_tOut[BUFFER_SIZE],
              float Cap, float Rx, float Ry, float Rz, float dt) {
-    
+   // #pragma HLS INLINE OFF
     float ce, cw, cn, cs, ct, cb, cc;
     float stepDivCap = dt / Cap;
     ce = cw = stepDivCap / Rx;
@@ -105,6 +96,7 @@ void compute(float local_pIn[BUFFER_SIZE],
 
 // Store function
 void store(float* tOut, float local_tOut[BUFFER_SIZE], int tileOffset) {
+   // #pragma HLS INLINE OFF
     for (int z = 0; z < TILE_Z; z++) {
         for (int y = 0; y < TILE_Y; y++) {
             for (int x = 0; x < TILE_X; x++) {
@@ -116,12 +108,12 @@ void store(float* tOut, float local_tOut[BUFFER_SIZE], int tileOffset) {
     }
 }
 
-void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry, float Rz, float dt, int numiter) {
+void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry, float Rz, float dt) {
     float local_pIn[BUFFER_SIZE];
     float local_tIn[HALO_BUFFER_SIZE];
     float local_tOut[BUFFER_SIZE];
 
-    for (int iter = 0; iter < numiter; iter++) {
+    for (int iter = 0; iter < NUMITER; iter++) {
         for (int yTile = 0; yTile < NY; yTile += TILE_Y) {
             int boundaryFlag = NOT_BOUNDARY;
             if (yTile == 0 ) {
@@ -131,7 +123,6 @@ void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry,
             }
 
             int tileOffset = yTile * NX;
-            int tileSize = TILE_X * TILE_Y * TILE_Z;
 
             // Load data for each tile with boundary handling
             load(pIn, tIn, local_pIn, local_tIn, tileOffset, boundaryFlag);

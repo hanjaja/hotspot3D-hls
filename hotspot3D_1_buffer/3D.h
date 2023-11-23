@@ -1,8 +1,14 @@
 #ifndef _H_3D_H_
 #define _H_3D_H_
 
+#define NX 1024  // Fixed x-dimension
+#define NY 1024  // Fixed y-dimension
+#define NZ 8    // Fixed z-dimension
+
+#define NUMITER 100
+
 void hotspot(float *pIn, float* tIn, float *tOut, float Cap, 
         float Rx, float Ry, float Rz, 
-        float dt, int numiter);
+        float dt);
 
 #endif // _H_3D_H_

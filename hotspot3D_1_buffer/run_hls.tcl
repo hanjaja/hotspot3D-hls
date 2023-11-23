@@ -14,8 +14,8 @@ add_files -tb 3D_test.cpp
 open_solution "solution1"
 # set target FPGA device: Alveo U50 in this example
 set_part {xcu50-fsvh2104-2-e}
-# target clock period is 5 ns, i.e., 200MHz
-create_clock -period 5
+# target clock period is 3 ns, i.e., 300MHz
+create_clock -period 3.3
 
 # do a c simulation
 csim_design
