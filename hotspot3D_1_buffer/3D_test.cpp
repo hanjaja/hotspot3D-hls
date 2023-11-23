@@ -17,6 +17,11 @@
 /* capacitance fitting factor	*/
 #define FACTOR_CHIP	0.5
 
+#define HPERERA "/localhome/hperera/hotspot3D-hls/data/power_512x8"
+#define HPERERA2 "/localhome/hperera/hotspot3D-hls/data/temp_512x8"
+#define HPERERA3 "/localhome/hperera/hotspot3D-hls/data/output.out"
+#define HPERERA4 "/localhome/hperera/hotspot3D-hls/data/output_cpu.out"
+
 /* chip parameters	*/
 float t_chip = 0.0005;
 float chip_height = 0.016; float chip_width = 0.016; 
@@ -163,10 +168,10 @@ int main(int argc, char** argv)
     //char *pfile, *tfile, *ofile;// *testFile;
     int iterations = 100;
 
-    char pfile[] = "/localhome/drashid/ENSC453/hotspot3D-hls/data/power_512x8";
-    char tfile[] = "/localhome/drashid/ENSC453/hotspot3D-hls/data/temp_512x8";
-    char ofile[] = "/localhome/drashid/ENSC453/hotspot3D-hls/data/output.out";
-    char ofile_cpu[] = "/localhome/drashid/ENSC453/hotspot3D-hls/data/output_cpu.out";
+    char pfile[] = HPERERA;
+    char tfile[] = HPERERA2;
+    char ofile[] = HPERERA3;
+    char ofile_cpu[] = HPERERA4;
     //testFile = argv[7];
     int numCols = 512;
     int numRows = 512;
@@ -210,13 +215,13 @@ int main(int argc, char** argv)
 
     // FPGA execution
     gettimeofday(&start,NULL);
-    computeTempFPGA(powerIn, tempIn, tempOut, Cap, Rx, Ry, Rz, dt, 1);
+    computeTempFPGA(powerIn, tempIn, tempOut, Cap, Rx, Ry, Rz, dt, iterations);
     gettimeofday(&stop,NULL);
     time = (stop.tv_usec - start.tv_usec) * 1.0e-6 + stop.tv_sec - start.tv_sec;
 
     // CPU execution
     gettimeofday(&start,NULL);
-    computeTempCPU(powerIn, tempCopy, answer, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt, 1);
+    computeTempCPU(powerIn, tempCopy, answer, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt, iterations);
     gettimeofday(&stop,NULL);
     CPU_time = (stop.tv_usec - start.tv_usec) * 1.0e-6 + stop.tv_sec - start.tv_sec;
 

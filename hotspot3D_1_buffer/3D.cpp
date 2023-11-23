@@ -62,7 +62,7 @@ void load_in_with_halo(float *in, float local_in[HALO_BUFFER_SIZE], int tileOffs
 }
 
 // Combined load function with halo handling
-void load(float *pIn, float *tIn, float local_pIn[BUFFER_SIZE], float local_tIn[HALO_BUFFER_SIZE], int tileOffset, bool isBoundary) {
+void load(float *pIn, float *tIn, float local_pIn[BUFFER_SIZE], float local_tIn[HALO_BUFFER_SIZE], int tileOffset, int isBoundary) {
     #pragma HLS DATAFLOW
     load_power(pIn, local_pIn, tileOffset);
     load_in_with_halo(tIn, local_tIn, tileOffset, isBoundary);
