@@ -139,10 +139,8 @@ float accuracy(float *arr1, float *arr2, int len)
 
 }
 
-void computeTempFPGA(float *pIn, float* tIn, float *tOut, float Cap, 
-                     float Rx, float Ry, float Rz, 
-                     float dt) {
-    hotspot(pIn, tIn, tOut, Cap, Rx, Ry, Rz, dt);
+void computeTempFPGA(float *pIn, float* tIn, float *tOut, float stepDivCap, float ce, float cw, float cn, float cs, float ct, float cb, float cc) {
+    hotspot(pIn, tIn, tOut, stepDivCap, ce, cw, cn, cs, ct, cb, cc);
 }
 
 void usage(int argc, char **argv)
@@ -192,6 +190,12 @@ int main(int argc, char** argv)
     float max_slope = MAX_PD / (FACTOR_CHIP * t_chip * SPEC_HEAT_SI);
     float dt = PRECISION / max_slope;
 
+    float ce, cw, cn, cs, ct, cb, cc;
+    float stepDivCap = dt / Cap;
+    ce = cw = stepDivCap / Rx;
+    cn = cs = stepDivCap / Ry;
+    ct = cb = stepDivCap / Rz;
+    cc = 1.0 - (2.0 * ce + 2.0 * cn + 3.0 * ct);
 
     float *powerIn, *tempOut, *tempIn, *tempCopy;// *pCopy;
     //    float *d_powerIn, *d_tempIn, *d_tempOut;
@@ -215,7 +219,7 @@ int main(int argc, char** argv)
 
     // FPGA execution
     gettimeofday(&start,NULL);
-    computeTempFPGA((class ap_uint<LARGE_BUS> *)powerIn, (class ap_uint<LARGE_BUS> *)tempIn, (class ap_uint<LARGE_BUS> *)tempOut, Cap, Rx, Ry, Rz, dt);
+    computeTempFPGA((class ap_uint<LARGE_BUS> *)powerIn, (class ap_uint<LARGE_BUS> *)tempIn, (class ap_uint<LARGE_BUS> *)tempOut, stepDivCap, ce, cw, cn, cs, ct, cb, cc);
     gettimeofday(&stop,NULL);
     time = (stop.tv_usec - start.tv_usec) * 1.0e-6 + stop.tv_sec - start.tv_sec;
 

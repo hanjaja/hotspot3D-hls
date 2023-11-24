@@ -7,13 +7,16 @@
 #define HALO_BUFFER_SIZE (TILE_X * (TILE_Y + 2) * TILE_Z)
 #define BUFFER_SIZE (TILE_X * TILE_Y * TILE_Z)
 
-#define NOT_BOUNDARY 0
-#define FIRST_TILE 1
-#define LAST_TILE 2
+enum TileStatus {
+    NOT_BOUNDARY = 0,
+    FIRST_TILE = 1,
+    LAST_TILE = 2
+};
 
 #define AMB_TEMP 80.0
 
 void load_power(float *pIn, float local_pIn[BUFFER_SIZE], int tileOffset) {
+    LOAD_POWER_LOOP:
     for (int z = 0; z < TILE_Z; z++) {
         for (int y = 0; y < TILE_Y; y++) {
             for (int x = 0; x < TILE_X; x++) {
@@ -26,8 +29,9 @@ void load_power(float *pIn, float local_pIn[BUFFER_SIZE], int tileOffset) {
 }
 
 // load in with halo
-void load_in_with_halo(float *in, float local_in[HALO_BUFFER_SIZE], int tileOffset, int isBoundary) {
+void load_in_with_halo(float *in, float local_in[HALO_BUFFER_SIZE], int tileOffset, TileStatus isBoundary) {
     int globalIdx, localIdx;
+    LOAD_HALO_LOOP:
     for (int z = 0; z < TILE_Z; z++) {
         for (int y = -1; y <= TILE_Y; y++) { // Halo cells included
             for (int x = 0; x < TILE_X; x++) {
@@ -52,8 +56,8 @@ void load_in_with_halo(float *in, float local_in[HALO_BUFFER_SIZE], int tileOffs
 }
 
 // Combined load function with halo handling
-void load(float *pIn, float *tIn, float local_pIn[BUFFER_SIZE], float local_tIn[HALO_BUFFER_SIZE], int tileOffset, int isBoundary) {
-    //#pragma HLS INLINE OFF
+void load(float *pIn, float *tIn, float local_pIn[BUFFER_SIZE], float local_tIn[HALO_BUFFER_SIZE], int tileOffset, TileStatus isBoundary) {
+    #pragma HLS inline off
     //#pragma HLS DATAFLOW
     load_power(pIn, local_pIn, tileOffset);
     load_in_with_halo(tIn, local_tIn, tileOffset, isBoundary);
@@ -61,23 +65,15 @@ void load(float *pIn, float *tIn, float local_pIn[BUFFER_SIZE], float local_tIn[
 
 void compute(float local_pIn[BUFFER_SIZE], 
              float local_tIn[HALO_BUFFER_SIZE], 
-             float local_tOut[BUFFER_SIZE],
-             float Cap, float Rx, float Ry, float Rz, float dt) {
-    //#pragma HLS INLINE OFF
-    float ce, cw, cn, cs, ct, cb, cc;
-    float stepDivCap = dt / Cap;
-    ce = cw = stepDivCap / Rx;
-    cn = cs = stepDivCap / Ry;
-    ct = cb = stepDivCap / Rz;
-    cc = 1.0 - (2.0 * ce + 2.0 * cn + 3.0 * ct);
-
+             float local_tOut[BUFFER_SIZE], float stepDivCap,
+             float ce, float cw, float cn, float cs, float ct, float cb, float cc) {
+    #pragma HLS inline off
+    COMPUTE_LOOP_X:
     for (int z = 0; z < TILE_Z; z++) {
+        COMPUTE_LOOP_Z:
         for (int y = 1; y < TILE_Y + 1; y++) {  // Exclude halo cells
-        #pragma HLS loop_flatten 
-        #pragma HLS PIPELINE II=1
-
+            COMPUTE_LOOP_Y:
             for (int x = 0; x < TILE_X; x++) {
-                #pragma HLS UNROLL
                 int c = x + y * TILE_X + z * TILE_X * (TILE_Y + 2);
                 
                 int w = (x == 0) ? c      : c - 1;
@@ -91,7 +87,7 @@ void compute(float local_pIn[BUFFER_SIZE],
 
                 local_tOut[c_no_halo] = local_tIn[c] * cc + local_tIn[n] * cn + local_tIn[s] * cs +
                                 local_tIn[e] * ce + local_tIn[w] * cw + local_tIn[t] * ct +
-                                local_tIn[b] * cb + (dt / Cap) * local_pIn[c_no_halo] + ct * AMB_TEMP;
+                                local_tIn[b] * cb + stepDivCap * local_pIn[c_no_halo] + ct * AMB_TEMP;
             }
         }
     }
@@ -99,7 +95,8 @@ void compute(float local_pIn[BUFFER_SIZE],
 
 // Store function
 void store(float* tOut, float local_tOut[BUFFER_SIZE], int tileOffset) {
-    //#pragma HLS INLINE OFF
+    #pragma HLS inline off
+    STORE_LOOP:
     for (int z = 0; z < TILE_Z; z++) {
         for (int y = 0; y < TILE_Y; y++) {
             for (int x = 0; x < TILE_X; x++) {
@@ -111,25 +108,21 @@ void store(float* tOut, float local_tOut[BUFFER_SIZE], int tileOffset) {
     }
 }
 
-void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry, float Rz, float dt) {
+
+void hotspot(float *pIn, float* tIn, float *tOut, float stepDivCap,
+             float ce, float cw, float cn, float cs, float ct, float cb, float cc) {
+
     float local_pIn[TILE_Z][TILE_Y][TILE_X];
-    #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=1
-    #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=2
-    #pragma hls array_partition variable=local_pIn complete dim=3
 
     float local_tIn[TILE_Z][TILE_Y + 2][TILE_X];
-    #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=1
-    #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=2
-    #pragma hls array_partition variable=local_tIn complete dim=3
 
     float local_tOut[TILE_Z][TILE_Y][TILE_X];
-    #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=1
-    #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=2
-    #pragma hls array_partition variable=local_tOut complete dim=3
 
-    for (int iter = 0; iter < NUMITER; iter++) {
+    ITERATION_LOOP:
+    for (int iter = 0; iter < NUMITER/2; iter++) {
+        TILE_LOOP:
         for (int yTile = 0; yTile < NY; yTile += TILE_Y) {
-            int boundaryFlag = NOT_BOUNDARY;
+            TileStatus boundaryFlag = NOT_BOUNDARY;
             if (yTile == 0 ) {
                 boundaryFlag = FIRST_TILE;
             } else if (yTile == NY - TILE_Y) {
@@ -142,15 +135,30 @@ void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry,
             load(pIn, tIn, &local_pIn[0][0][0], &local_tIn[0][0][0], tileOffset, boundaryFlag);
 
             // Compute temperatures for each tile
-            compute(&local_pIn[0][0][0], &local_tIn[0][0][0], &local_tOut[0][0][0], Cap, Rx, Ry, Rz, dt);
+            compute(&local_pIn[0][0][0], &local_tIn[0][0][0], &local_tOut[0][0][0], stepDivCap, ce, cw, cn, cs, ct, cb, cc);
 
             // Store only the computational region of each tile
             store(tOut, &local_tOut[0][0][0], tileOffset);
         }
 
-        // Swap input and output buffers for the next iteration
-        float* temp = tIn;
-        tIn = tOut;
-        tOut = temp;
+        for (int yTile = 0; yTile < NY; yTile += TILE_Y) {
+            TileStatus boundaryFlag = NOT_BOUNDARY;
+            if (yTile == 0 ) {
+                boundaryFlag = FIRST_TILE;
+            } else if (yTile == NY - TILE_Y) {
+                boundaryFlag = LAST_TILE;
+            }
+
+            int tileOffset = yTile * NX;
+
+            // Load data for each tile with boundary handling
+            load(pIn, tOut, &local_pIn[0][0][0], &local_tIn[0][0][0], tileOffset, boundaryFlag);
+
+            // Compute temperatures for each tile
+            compute(&local_pIn[0][0][0], &local_tIn[0][0][0], &local_tOut[0][0][0], stepDivCap, ce, cw, cn, cs, ct, cb, cc);
+
+            // Store only the computational region of each tile
+            store(tIn, &local_tOut[0][0][0], tileOffset);
+        }
     }
 }
