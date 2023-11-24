@@ -22,6 +22,11 @@
 #define HPERERA3 "/localhome/hperera/hotspot3D-hls/data/output.out"
 #define HPERERA4 "/localhome/hperera/hotspot3D-hls/data/output_cpu.out"
 
+#define DRASHID "/localhome/drashid/ENSC453/hotspot3D-hls/data/power_1024x8"
+#define DRASHID2 "/localhome/drashid/ENSC453/hotspot3D-hls/data/temp_1024x8"
+#define DRASHID3 "/localhome/drashid/ENSC453/hotspot3D-hls/data/output.out"
+#define DRASHID4 "/localhome/drashid/ENSC453/hotspot3D-hls/data/output_cpu.out"
+
 /* chip parameters	*/
 float t_chip = 0.0005;
 float chip_height = 0.016; float chip_width = 0.016; 
@@ -168,10 +173,10 @@ int main(int argc, char** argv)
     //char *pfile, *tfile, *ofile;// *testFile;
     int iterations = NUMITER;
 
-    char pfile[] = HPERERA;
-    char tfile[] = HPERERA2;
-    char ofile[] = HPERERA3;
-    char ofile_cpu[] = HPERERA4;
+    char pfile[] = DRASHID;
+    char tfile[] = DRASHID2;
+    char ofile[] = DRASHID3;
+    char ofile_cpu[] = DRASHID4;
     //testFile = argv[7];
     int numCols = NY;
     int numRows = NX;

@@ -72,11 +72,10 @@ void compute(float local_pIn[BUFFER_SIZE],
     cc = 1.0 - (2.0 * ce + 2.0 * cn + 3.0 * ct);
 
     for (int z = 0; z < TILE_Z; z++) {
-        for (int y = 1; y < TILE_Y + 1; y++) {  // Exclude halo cells
-        #pragma HLS loop_flatten 
-        #pragma HLS PIPELINE II=1
-
-            for (int x = 0; x < TILE_X; x++) {
+        for (int x = 0; x < TILE_X; x++) {  // Exclude halo cells
+            #pragma HLS loop_flatten 
+            #pragma HLS PIPELINE II=1
+            for (int y = 1; y < TILE_Y + 1; y++) {
                 #pragma HLS UNROLL
                 int c = x + y * TILE_X + z * TILE_X * (TILE_Y + 2);
                 
@@ -114,18 +113,18 @@ void store(float* tOut, float local_tOut[BUFFER_SIZE], int tileOffset) {
 void hotspot(float *pIn, float* tIn, float *tOut, float Cap, float Rx, float Ry, float Rz, float dt) {
     float local_pIn[TILE_Z][TILE_Y][TILE_X];
     #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=1
-    #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=2
-    #pragma hls array_partition variable=local_pIn complete dim=3
+    #pragma hls array_partition variable=local_pIn complete  dim=2
+    #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=3
 
     float local_tIn[TILE_Z][TILE_Y + 2][TILE_X];
     #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=1
-    #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=2
-    #pragma hls array_partition variable=local_tIn complete dim=3
+    #pragma hls array_partition variable=local_tIn complete  dim=2
+    #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=3
 
     float local_tOut[TILE_Z][TILE_Y][TILE_X];
     #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=1
-    #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=2
-    #pragma hls array_partition variable=local_tOut complete dim=3
+    #pragma hls array_partition variable=local_tOut complete  dim=2
+    #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=3
 
     for (int iter = 0; iter < NUMITER; iter++) {
         for (int yTile = 0; yTile < NY; yTile += TILE_Y) {
