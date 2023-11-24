@@ -139,7 +139,7 @@ float accuracy(float *arr1, float *arr2, int len)
 
 }
 
-void computeTempFPGA(float *pIn, float* tIn, float *tOut, float stepDivCap, float ce, float cw, float cn, float cs, float ct, float cb, float cc) {
+void computeTempFPGA(INTERFACE_WIDTH *pIn, INTERFACE_WIDTH* tIn, INTERFACE_WIDTH *tOut, float stepDivCap, float ce, float cw, float cn, float cs, float ct, float cb, float cc) {
     hotspot(pIn, tIn, tOut, stepDivCap, ce, cw, cn, cs, ct, cb, cc);
 }
 
