@@ -16,10 +16,8 @@ enum TileStatus {
 #define AMB_TEMP 80.0
 
 void load_power(INTERFACE_WIDTH *pIn, float local_pIn[TILE_Z][TILE_Y][TILE_X], int tileOffset) {
-    #pragma HLS INLINE OFF
     LOAD_POWER_LOOP:
     for (int z = 0; z < TILE_Z; z++) {
-    #pragma HLS pipeline II=1
         int globalIdx = tileOffset + z * NX * NY;
         memcpy_wide_bus_read_float((float*)local_pIn[z], (class ap_uint<LARGE_BUS> *)(pIn + globalIdx/WIDTH_FACTOR), 0, sizeof(float) * TILE_X * TILE_Y);             
         }
@@ -27,12 +25,10 @@ void load_power(INTERFACE_WIDTH *pIn, float local_pIn[TILE_Z][TILE_Y][TILE_X], i
 
 // load in with halo
 void load_in_with_halo(INTERFACE_WIDTH *in, float local_in[TILE_Z][TILE_Y + 2][TILE_X], int tileOffset, TileStatus isBoundary) {
-    #pragma HLS INLINE OFF
     int globalIdx, localIdx;
     LOAD_HALO_LOOP:
     for (int z = 0; z < TILE_Z; z++) {
         for (int y = -1; y <= TILE_Y; y++) { // Halo cells included
-        #pragma HLS pipeline II=1
             localIdx = (y + 1) * TILE_X + z * TILE_X * (TILE_Y + 2);
 
             int haloY;
@@ -107,20 +103,21 @@ void store(INTERFACE_WIDTH* tOut, float local_tOut[TILE_Z][TILE_Y][TILE_X], int 
 void hotspot(INTERFACE_WIDTH pIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tOut[NX*NY*NZ/WIDTH_FACTOR], 
              float stepDivCap, float ce, float cw, float cn, float cs, float ct, float cb, float cc) {
     
-    float local_pIn[TILE_Z][TILE_Y][TILE_X];
+    float local_pIn[TILE_Z][TILE_Y][TILE_X];    
     #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=1
     #pragma hls array_partition variable=local_pIn complete  dim=2
-    #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=3
+    #pragma hls array_partition variable=local_pIn cyclic factor=6 dim=3
 
     float local_tIn[TILE_Z][TILE_Y + 2][TILE_X];
     #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=1
     #pragma hls array_partition variable=local_tIn complete  dim=2
-    #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=3
+    #pragma hls array_partition variable=local_tIn cyclic factor=6 dim=3
 
     float local_tOut[TILE_Z][TILE_Y][TILE_X];
+    #pragma HLS BIND_STORAGE variable=local_pIn type=RAM_1P impl=URAM
     #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=1
     #pragma hls array_partition variable=local_tOut complete  dim=2
-    #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=3
+    #pragma hls array_partition variable=local_tOut cyclic factor=6 dim=3
 
     ITERATION_LOOP:
     for (int iter = 0; iter < NUMITER/2; iter++) {
