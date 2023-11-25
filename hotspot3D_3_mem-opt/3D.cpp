@@ -16,8 +16,10 @@ enum TileStatus {
 #define AMB_TEMP 80.0
 
 void load_power(INTERFACE_WIDTH *pIn, float local_pIn[TILE_Z][TILE_Y][TILE_X], int tileOffset) {
+    #pragma HLS INLINE OFF
     LOAD_POWER_LOOP:
     for (int z = 0; z < TILE_Z; z++) {
+    #pragma HLS pipeline II=1
         int globalIdx = tileOffset + z * NX * NY;
         memcpy_wide_bus_read_float((float*)local_pIn[z], (class ap_uint<LARGE_BUS> *)(pIn + globalIdx/WIDTH_FACTOR), 0, sizeof(float) * TILE_X * TILE_Y);             
         }
@@ -25,10 +27,12 @@ void load_power(INTERFACE_WIDTH *pIn, float local_pIn[TILE_Z][TILE_Y][TILE_X], i
 
 // load in with halo
 void load_in_with_halo(INTERFACE_WIDTH *in, float local_in[TILE_Z][TILE_Y + 2][TILE_X], int tileOffset, TileStatus isBoundary) {
+    #pragma HLS INLINE OFF
     int globalIdx, localIdx;
     LOAD_HALO_LOOP:
     for (int z = 0; z < TILE_Z; z++) {
         for (int y = -1; y <= TILE_Y; y++) { // Halo cells included
+        #pragma HLS pipeline II=1
             localIdx = (y + 1) * TILE_X + z * TILE_X * (TILE_Y + 2);
 
             int haloY;
@@ -51,7 +55,7 @@ void load_in_with_halo(INTERFACE_WIDTH *in, float local_in[TILE_Z][TILE_Y + 2][T
 // Combined load function with halo handling
 void load(INTERFACE_WIDTH *pIn, INTERFACE_WIDTH *tIn, float local_pIn[TILE_Z][TILE_Y][TILE_X], float local_tIn[TILE_Z][TILE_Y + 2][TILE_X], int tileOffset, TileStatus isBoundary) {
     #pragma HLS INLINE OFF
-    //#pragma HLS DATAFLOW
+    #pragma HLS DATAFLOW
     load_power(pIn, local_pIn, tileOffset);
     load_in_with_halo(tIn, local_tIn, tileOffset, isBoundary);
 }
