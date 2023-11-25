@@ -6,7 +6,7 @@
 
 #define DWIDTH 512
 #define INTERFACE_WIDTH ap_uint<DWIDTH>
-const int WIDTH_FACTOR = DWIDTH/32;
+#define WIDTH_FACTOR (DWIDTH/32)
 
 #define NX 1024  // Fixed x-dimension
 #define NY 1024  // Fixed y-dimension
