@@ -17,6 +17,16 @@
 /* capacitance fitting factor	*/
 #define FACTOR_CHIP	0.5
 
+#define HPERERA "/localhome/hperera/hotspot3D-hls/data/power_1024x8"
+#define HPERERA2 "/localhome/hperera/hotspot3D-hls/data/temp_1024x8"
+#define HPERERA3 "/localhome/hperera/hotspot3D-hls/data/output.out"
+#define HPERERA4 "/localhome/hperera/hotspot3D-hls/data/output_cpu.out"
+
+#define DRASHID "/localhome/drashid/ENSC453/hotspot3D-hls/data/power_1024x8"
+#define DRASHID2 "/localhome/drashid/ENSC453/hotspot3D-hls/data/temp_1024x8"
+#define DRASHID3 "/localhome/drashid/ENSC453/hotspot3D-hls/data/output.out"
+#define DRASHID4 "/localhome/drashid/ENSC453/hotspot3D-hls/data/output_cpu.out"
+
 /* chip parameters	*/
 float t_chip = 0.0005;
 float chip_height = 0.016; float chip_width = 0.016; 
@@ -134,11 +144,8 @@ float accuracy(float *arr1, float *arr2, int len)
 
 }
 
-void computeTempFPGA(float *pIn, float* tIn, float *tOut, 
-                     int nx, int ny, int nz, float Cap, 
-                     float Rx, float Ry, float Rz, 
-                     float dt, int numiter) {
-    hotspot(pIn, tIn, tOut, Cap, Rx, Ry, Rz, dt, numiter);
+void computeTempFPGA(INTERFACE_WIDTH *pIn, INTERFACE_WIDTH* tIn, INTERFACE_WIDTH *tOut, float stepDivCap, float ce, float cw, float cn, float cs, float ct, float cb, float cc) {
+    hotspot(pIn, tIn, tOut, stepDivCap, ce, cw, cn, cs, ct, cb, cc);
 }
 
 void usage(int argc, char **argv)
@@ -162,15 +169,16 @@ int main(int argc, char** argv)
     }*/
 
     //char *pfile, *tfile, *ofile;// *testFile;
-    int iterations = 100;
+    int iterations = NUMITER;
 
-    char pfile[] = "/ugrad/1/kmokaya/hotspot3D-hls/project/data/power_512x8";
-    char tfile[] = "/ugrad/1/kmokaya/hotspot3D-hls/project/data/temp_512x8";
-    char ofile[] = "output.out";
+    char pfile[] = HPERERA;
+    char tfile[] = HPERERA2;
+    char ofile[] = HPERERA3;
+    char ofile_cpu[] = HPERERA4;
     //testFile = argv[7];
-    int numCols = 512;
-    int numRows = 512;
-    int layers = 8;
+    int numCols = NY;
+    int numRows = NX;
+    int layers = NZ;
 
     /* calculating parameters*/
 
@@ -187,6 +195,12 @@ int main(int argc, char** argv)
     float max_slope = MAX_PD / (FACTOR_CHIP * t_chip * SPEC_HEAT_SI);
     float dt = PRECISION / max_slope;
 
+    float ce, cw, cn, cs, ct, cb, cc;
+    float stepDivCap = dt / Cap;
+    ce = cw = stepDivCap / Rx;
+    cn = cs = stepDivCap / Ry;
+    ct = cb = stepDivCap / Rz;
+    cc = 1.0 - (2.0 * ce + 2.0 * cn + 3.0 * ct);
 
     float *powerIn, *tempOut, *tempIn, *tempCopy;// *pCopy;
     //    float *d_powerIn, *d_tempIn, *d_tempOut;
@@ -210,7 +224,7 @@ int main(int argc, char** argv)
 
     // FPGA execution
     gettimeofday(&start,NULL);
-    computeTempFPGA(powerIn, tempIn, tempOut, numCols, numRows, layers, Cap, Rx, Ry, Rz, dt, iterations);
+    computeTempFPGA((class ap_uint<LARGE_BUS> *)powerIn, (class ap_uint<LARGE_BUS> *)tempIn, (class ap_uint<LARGE_BUS> *)tempOut, stepDivCap, ce, cw, cn, cs, ct, cb, cc);
     gettimeofday(&stop,NULL);
     time = (stop.tv_usec - start.tv_usec) * 1.0e-6 + stop.tv_sec - start.tv_sec;
 
@@ -228,6 +242,7 @@ int main(int argc, char** argv)
 
     // Write output and cleanup
     writeoutput(tempOut, numRows, numCols, layers, ofile);
+    writeoutput(answer, numRows, numCols, layers, ofile_cpu);
     free(tempIn); free(tempOut); free(powerIn); free(answer); free(tempCopy);
 
     return 0;
