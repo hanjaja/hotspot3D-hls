@@ -18,9 +18,11 @@ enum TileStatus {
 void load_power(INTERFACE_WIDTH *pIn, float local_pIn[TILE_Z][TILE_Y][TILE_X], int tileOffset) {
     LOAD_POWER_LOOP:
     for (int z = 0; z < TILE_Z; z++) {
-        int globalIdx = tileOffset + z * NX * NY;
-        memcpy_wide_bus_read_float((float*)local_pIn[z], (class ap_uint<LARGE_BUS> *)(pIn + globalIdx/WIDTH_FACTOR), 0, sizeof(float) * TILE_X * TILE_Y);             
+        for ( int y = 0; y < TILE_Y; y++){
+            int globalIdx = tileOffset + (y * NX + z * NX * NY);
+            memcpy_wide_bus_read_float(local_pIn[z][y], (class ap_uint<LARGE_BUS> *)(pIn + globalIdx/WIDTH_FACTOR), 0, sizeof(float) * TILE_X);             
         }
+    }
 }
 
 // load in with halo
@@ -92,11 +94,10 @@ void store(INTERFACE_WIDTH* tOut, float local_tOut[TILE_Z][TILE_Y][TILE_X], int 
     #pragma HLS INLINE OFF
     STORE_LOOP:
     for (int z = 0; z < TILE_Z; z++) {
-        int localIdx = z * TILE_X * TILE_Y;
-        int globalIdx = tileOffset + z * NX * NY;
-        //local_pIn[localIdx] = pIn[globalIdx];   
-
-        memcpy_wide_bus_write_float((class ap_uint<LARGE_BUS> *)(tOut + globalIdx/WIDTH_FACTOR), (float*)local_tOut[z], 0, sizeof(float) * TILE_X * TILE_Y);             
+        for ( int y = 0; y < TILE_Y; y++){
+            int globalIdx = tileOffset + (y * NX + z * NX * NY);  
+            memcpy_wide_bus_write_float((class ap_uint<LARGE_BUS> *)(tOut + globalIdx/WIDTH_FACTOR),local_tOut[z][y], 0, sizeof(float) * TILE_X);             
+        }
     }
 }
 
