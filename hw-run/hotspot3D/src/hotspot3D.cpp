@@ -120,7 +120,22 @@ void compute_store(int flag, INTERFACE_WIDTH *tOut, float local_pIn[TILE_Z][TILE
 extern "C"{
 void hotspot3D(INTERFACE_WIDTH pIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tOut[NX*NY*NZ/WIDTH_FACTOR], 
              float stepDivCap, float ce, float cw, float cn, float cs, float ct, float cb, float cc) {
-
+            
+    #pragma HLS INTERFACE m_axi port = pIn offset = slave bundle = gmemf1
+    #pragma HLS INTERFACE m_axi port = tIn offset = slave bundle = gmemf2
+    #pragma HLS INTERFACE m_axi port = tOut offset = slave bundle = gmemf3
+    #pragma HLS INTERFACE s_axilite port = pIn bundle = control
+    #pragma HLS INTERFACE s_axilite port = tIn bundle = control
+    #pragma HLS INTERFACE s_axilite port = tOut bundle = control
+    #pragma HLS INTERFACE s_axilite port = stepDivCap bundle = control
+    #pragma HLS INTERFACE s_axilite port = ce bundle = control
+    #pragma HLS INTERFACE s_axilite port = cw bundle = control
+    #pragma HLS INTERFACE s_axilite port = cn bundle = control
+    #pragma HLS INTERFACE s_axilite port = cs bundle = control
+    #pragma HLS INTERFACE s_axilite port = ct bundle = control
+    #pragma HLS INTERFACE s_axilite port = cb bundle = control
+    #pragma HLS INTERFACE s_axilite port = cc bundle = control
+    #pragma HLS INTERFACE s_axilite port = return bundle = control
 
 
     float local_pIn_0[TILE_Z][TILE_Y][TILE_X];
