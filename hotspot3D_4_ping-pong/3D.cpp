@@ -65,8 +65,8 @@ void compute(int flag, float local_pIn[TILE_Z][TILE_Y][TILE_X],
              float local_tIn[TILE_Z][TILE_Y + 2][TILE_X], 
              float local_tOut[TILE_Z][TILE_Y][TILE_X], float stepDivCap,
              float ce, float cw, float cn, float cs, float ct, float cb, float cc) {
+    #pragma HLS inline off
     if (flag) {
-        #pragma HLS inline off
         COMPUTE_LOOP_Z:
         for (int z = 0; z < TILE_Z; z++) {
             COMPUTE_LOOP_X:
@@ -109,28 +109,63 @@ void store(int flag, INTERFACE_WIDTH* tOut, float local_tOut[TILE_Z][TILE_Y][TIL
     }
 }
 
+void compute_store(int flag, INTERFACE_WIDTH *tOut, float local_pIn[TILE_Z][TILE_Y][TILE_X], 
+                   float local_tIn[TILE_Z][TILE_Y + 2][TILE_X], float local_tOut[TILE_Z][TILE_Y][TILE_X], int tileOffset, float stepDivCap,
+                   float ce, float cw, float cn, float cs, float ct, float cb, float cc) {
+    //#pragma HLS INLINE OFF
+    compute(flag, local_pIn, local_tIn, local_tOut, stepDivCap, ce, cw, cn, cs, ct, cb, cc);
+    store(flag, tOut, local_tOut, tileOffset);
+}
+
 void hotspot(INTERFACE_WIDTH pIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tOut[NX*NY*NZ/WIDTH_FACTOR], 
              float stepDivCap, float ce, float cw, float cn, float cs, float ct, float cb, float cc) {
 
-    float local_pIn[2][TILE_Z][TILE_Y][TILE_X];
-    #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=2
-    #pragma hls array_partition variable=local_pIn complete  dim=3
-    #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=4
+    // float local_pIn[2][TILE_Z][TILE_Y][TILE_X];
+    // #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=2
+    // #pragma hls array_partition variable=local_pIn complete  dim=3
+    // #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=4
 
-    float local_tIn[2][TILE_Z][TILE_Y + 2][TILE_X];
-    #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=2
-    #pragma hls array_partition variable=local_tIn complete  dim=3
-    #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=4
+    // float local_tIn[2][TILE_Z][TILE_Y + 2][TILE_X];
+    // #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=2
+    // #pragma hls array_partition variable=local_tIn complete  dim=3
+    // #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=4
 
-    float local_tOut[2][TILE_Z][TILE_Y][TILE_X];
-    #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=2
-    #pragma hls array_partition variable=local_tOut complete  dim=3
-    #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=4
+    // float local_tOut[2][TILE_Z][TILE_Y][TILE_X];
+    // #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=2
+    // #pragma hls array_partition variable=local_tOut complete  dim=3
+    // #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=4
+
+    float local_pIn_0[TILE_Z][TILE_Y][TILE_X];
+    #pragma hls array_partition variable=local_pIn_0 cyclic factor=3 dim=1
+    #pragma hls array_partition variable=local_pIn_0 complete  dim=2
+    #pragma hls array_partition variable=local_pIn_0 cyclic factor=3 dim=3
+    #pragma hls bind_storage variable=local_pIn_0 type=ram_2p impl=uram
+
+    float local_pIn_1[TILE_Z][TILE_Y][TILE_X];
+    #pragma hls array_partition variable=local_pIn_1 cyclic factor=3 dim=1
+    #pragma hls array_partition variable=local_pIn_1 complete  dim=2
+    #pragma hls array_partition variable=local_pIn_1 cyclic factor=3 dim=3
+
+    float local_tIn_0[TILE_Z][TILE_Y + 2][TILE_X];
+    #pragma hls array_partition variable=local_tIn_0 cyclic factor=3 dim=1
+    #pragma hls array_partition variable=local_tIn_0 complete  dim=2
+    #pragma hls array_partition variable=local_tIn_0 cyclic factor=6 dim=3
+
+    float local_tIn_1[TILE_Z][TILE_Y + 2][TILE_X];
+    #pragma hls array_partition variable=local_tIn_1 cyclic factor=3 dim=1
+    #pragma hls array_partition variable=local_tIn_1 complete  dim=2
+    #pragma hls array_partition variable=local_tIn_1 cyclic factor=6 dim=3
+
+    float local_tOut[TILE_Z][TILE_Y][TILE_X];
+    #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=1
+    #pragma hls array_partition variable=local_tOut complete  dim=2
+    #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=3
 
     ITERATION_LOOP:
     for (int iter = 0; iter < NUMITER/2; iter++) {
         TILE_LOOP_1:
-        for (int yTile = 0; yTile <= NY; yTile += TILE_Y) {
+        for (int k = 0; k < NY / TILE_Y + 1; k++) {
+            int yTile = k * TILE_Y;
 
             int load_flag = yTile >= 0 && yTile < NY; 
             int compute_flag = yTile >= TILE_Y;
@@ -145,19 +180,24 @@ void hotspot(INTERFACE_WIDTH pIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tIn[NX*
 
             int tileOffset = yTile * NX;
 
-            if (yTile % (2*TILE_Y) == 0) {
-                load(load_flag, pIn, tIn, local_pIn[0], local_tIn[0], tileOffset, boundaryFlag);
-                compute(compute_flag, local_pIn[1], local_tIn[1], local_tOut[1], stepDivCap, ce, cw, cn, cs, ct, cb, cc);
-                store(store_flag, tOut, local_tOut[1], tileOffset - TILE_Y * NX);
+            if (k % 2 == 0) {
+                load(load_flag, pIn, tIn, local_pIn_0, local_tIn_0, tileOffset, boundaryFlag);
+                // compute(compute_flag, local_pIn_1, local_tIn_1, local_tOut_1, stepDivCap, ce, cw, cn, cs, ct, cb, cc);
+                // store(store_flag, tOut, local_tOut_1, tileOffset - TILE_Y * NX);
+                compute_store(compute_flag, tOut, local_pIn_1, local_tIn_1, local_tOut, tileOffset - TILE_Y * NX, \
+                              stepDivCap, ce, cw, cn, cs, ct, cb, cc);
             } else {
-                load(load_flag, pIn, tIn, local_pIn[1], local_tIn[1], tileOffset, boundaryFlag);
-                compute(compute_flag, local_pIn[0], local_tIn[0], local_tOut[0], stepDivCap, ce, cw, cn, cs, ct, cb, cc);
-                store(store_flag, tOut, local_tOut[0], tileOffset - TILE_Y * NX);
+                load(load_flag, pIn, tIn, local_pIn_1, local_tIn_1, tileOffset, boundaryFlag);
+                // compute(compute_flag, local_pIn_0, local_tIn_0, local_tOut_0, stepDivCap, ce, cw, cn, cs, ct, cb, cc);
+                // store(store_flag, tOut, local_tOut_0, tileOffset - TILE_Y * NX);
+                compute_store(compute_flag, tOut, local_pIn_0, local_tIn_0, local_tOut, tileOffset - TILE_Y * NX, \
+                              stepDivCap, ce, cw, cn, cs, ct, cb, cc);
             }
         }
 
         TILE_LOOP_2:
-        for (int yTile = 0; yTile <= NY; yTile += TILE_Y) {
+        for (int k = 0; k < NY / TILE_Y + 1; k++) {
+            int yTile = k * TILE_Y;
 
             int load_flag = yTile >= 0 && yTile < NY; 
             int compute_flag = yTile >= TILE_Y;
@@ -172,14 +212,18 @@ void hotspot(INTERFACE_WIDTH pIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tIn[NX*
 
             int tileOffset = yTile * NX;
 
-            if (yTile % (2*TILE_Y) == 0) {
-                load(load_flag, pIn, tOut, local_pIn[0], local_tIn[0], tileOffset, boundaryFlag);
-                compute(compute_flag, local_pIn[1], local_tIn[1], local_tOut[1], stepDivCap, ce, cw, cn, cs, ct, cb, cc);
-                store(store_flag, tIn, local_tOut[1], tileOffset - TILE_Y * NX);
+            if (k % 2 == 0) {
+                load(load_flag, pIn, tOut, local_pIn_0, local_tIn_0, tileOffset, boundaryFlag);
+                // compute(compute_flag, local_pIn_1, local_tIn_1, local_tOut_1, stepDivCap, ce, cw, cn, cs, ct, cb, cc);
+                // store(store_flag, tIn, local_tOut_1, tileOffset - TILE_Y * NX);
+                compute_store(compute_flag, tIn, local_pIn_1, local_tIn_1, local_tOut, tileOffset - TILE_Y * NX, \
+                              stepDivCap, ce, cw, cn, cs, ct, cb, cc);
             } else {
-                load(load_flag, pIn, tOut, local_pIn[1], local_tIn[1], tileOffset, boundaryFlag);
-                compute(compute_flag, local_pIn[0], local_tIn[0], local_tOut[0], stepDivCap, ce, cw, cn, cs, ct, cb, cc);
-                store(store_flag, tIn, local_tOut[0], tileOffset - TILE_Y * NX);
+                load(load_flag, pIn, tOut, local_pIn_1, local_tIn_1, tileOffset, boundaryFlag);
+                // compute(compute_flag, local_pIn_0, local_tIn_0, local_tOut_0, stepDivCap, ce, cw, cn, cs, ct, cb, cc);
+                // store(store_flag, tIn, local_tOut_0, tileOffset - TILE_Y * NX);
+                compute_store(compute_flag, tIn, local_pIn_0, local_tIn_0, local_tOut, tileOffset - TILE_Y * NX, \
+                              stepDivCap, ce, cw, cn, cs, ct, cb, cc);
             }
         }
     }
