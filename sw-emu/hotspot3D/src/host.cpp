@@ -228,13 +228,8 @@ int main(int argc, char** argv) {
     readinput(powerIn_f.data(),numRows, numCols, layers, pfile);
     readinput(tempIn_f.data(), numRows, numCols, layers, tfile);
     readinput(tempCopy_f.data(), numRows, numCols, layers, tfile);
-    //memcpy(tempCopy_f.data(),tempIn_f.data(), size * sizeof(float));
     printf("Initialized Arrays..\n");
-
-    //memcpy_wide_bus_write_float((class ap_uint<LARGE_BUS> *)powerIn, powerIn_f.data(), 0, sizeof(float)*size);
-    //memcpy_wide_bus_write_float((class ap_uint<LARGE_BUS> *)tempIn, tempIn_f.data(), 0, sizeof(float)*size);
-    //memcpy_wide_bus_write_float((class ap_uint<LARGE_BUS> *)tempOut, tempOut_f.data(), 0, sizeof(float)*size);    
-
+  
     // OPENCL HOST CODE AREA START
     auto devices = xcl::get_xil_devices();
     // read_binary_file() is a utility API which will load the binaryFile
@@ -266,11 +261,11 @@ int main(int argc, char** argv) {
 
     // Allocate Buffer in Global Memory
     OCL_CHECK(err, cl::Buffer buffer_tempOut(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, matrix_size_bytes,
-                                         ( class ap_uint<512> *)tempOut_f.data(), &err));
+                                         ( class ap_uint<DWIDTH> *)tempOut_f.data(), &err));
     OCL_CHECK(err, cl::Buffer buffer_powerIn(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, matrix_size_bytes,
-                                         ( class ap_uint<512> *)powerIn_f.data(), &err));
+                                         ( class ap_uint<DWIDTH> *)powerIn_f.data(), &err));
     OCL_CHECK(err, cl::Buffer buffer_tempIn(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, matrix_size_bytes,
-                                         ( class ap_uint<512> *)tempIn_f.data(), &err));
+                                         ( class ap_uint<DWIDTH> *)tempIn_f.data(), &err));
 
 
     OCL_CHECK(err, err = krnl_hotspot3D.setArg(0, buffer_powerIn));
@@ -315,8 +310,6 @@ int main(int argc, char** argv) {
     gettimeofday(&stop,NULL);
     CPU_time = (stop.tv_usec - start.tv_usec) * 1.0e-6 + stop.tv_sec - start.tv_sec;
 
-    //memcpy_wide_bus_read_float(tempOut_f.data(), (class ap_uint<LARGE_BUS> *)tempOut, 0, sizeof(float)*size);
-
     // Compare the results of the Device to the simulation
     float acc = accuracy(tempOut_f.data(), answer_f.data(), numRows * numCols * layers);
     printf("FPGA Time: %.3f (s)\n", time);
@@ -324,8 +317,8 @@ int main(int argc, char** argv) {
     printf("Accuracy: %e\n", acc);
    
     writeoutput(tempOut_f.data(), numRows, numCols, layers, ofile);
+    //writeoutput(powerIn_f.data(), numRows, numCols, layers, ofile);
     writeoutput(answer_f.data(), numRows, numCols, layers, ofile_cpu);
-    //free(tempIn_f); free(tempOut_f); free(powerIn_f); free(answer_f); free(tempCopy_f);
 
     return (0);
 }

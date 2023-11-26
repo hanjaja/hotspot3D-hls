@@ -8,14 +8,15 @@
 #define INTERFACE_WIDTH ap_uint<DWIDTH>
 #define WIDTH_FACTOR (DWIDTH/32)
 
-#define NX 1024  // Fixed x-dimension
-#define NY 1024  // Fixed y-dimension
-#define NZ 8    // Fixed z-dimension
+#define NX 32  // Fixed x-dimension
+#define NY 32  // Fixed y-dimension
+#define NZ 4    // Fixed z-dimension
 
 #define NUMITER 2
 
 extern "C"{
-void hotspot3D(INTERFACE_WIDTH pIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tOut[NX*NY*NZ/WIDTH_FACTOR], 
+void hotspot(INTERFACE_WIDTH pIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tOut[NX*NY*NZ/WIDTH_FACTOR], 
              float stepDivCap, float ce, float cw, float cn, float cs, float ct, float cb, float cc);
-}
+
 #endif // _H_3D_H_
+}
