@@ -1,7 +1,7 @@
 #include "hotspot3D.h"
 
 #define TILE_X NX   // Full width
-#define TILE_Y 8
+#define TILE_Y 16
 #define TILE_Z NZ     // Full depth
 
 #define HALO_BUFFER_SIZE (TILE_X * (TILE_Y + 2) * TILE_Z)
