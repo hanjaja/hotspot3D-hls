@@ -171,10 +171,10 @@ int main(int argc, char** argv)
     //char *pfile, *tfile, *ofile;// *testFile;
     int iterations = NUMITER;
 
-    char pfile[] = DRASHID;
-    char tfile[] = DRASHID2;
-    char ofile[] = DRASHID3;
-    char ofile_cpu[] = DRASHID4;
+    char pfile[] = HPERERA;
+    char tfile[] = HPERERA2;
+    char ofile[] = HPERERA3;
+    char ofile_cpu[] = HPERERA4;
     //testFile = argv[7];
     int numCols = NY;
     int numRows = NX;
