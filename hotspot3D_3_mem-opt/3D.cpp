@@ -107,18 +107,18 @@ void hotspot(INTERFACE_WIDTH pIn[NX*NY*NZ/WIDTH_FACTOR], INTERFACE_WIDTH tIn[NX*
     float local_pIn[TILE_Z][TILE_Y][TILE_X];    
     #pragma hls array_partition variable=local_pIn cyclic factor=3 dim=1
     #pragma hls array_partition variable=local_pIn complete  dim=2
-    #pragma hls array_partition variable=local_pIn cyclic factor=6 dim=3
+    #pragma hls array_partition variable=local_pIn cyclic factor=8 dim=3
 
     float local_tIn[TILE_Z][TILE_Y + 2][TILE_X];
     #pragma hls array_partition variable=local_tIn cyclic factor=3 dim=1
     #pragma hls array_partition variable=local_tIn complete  dim=2
-    #pragma hls array_partition variable=local_tIn cyclic factor=6 dim=3
+    #pragma hls array_partition variable=local_tIn cyclic factor=8 dim=3
 
     float local_tOut[TILE_Z][TILE_Y][TILE_X];
-    #pragma HLS BIND_STORAGE variable=local_pIn type=RAM_1P impl=URAM
+    #pragma HLS BIND_STORAGE variable=local_tOut type=RAM_1P impl=URAM
     #pragma hls array_partition variable=local_tOut cyclic factor=3 dim=1
     #pragma hls array_partition variable=local_tOut complete  dim=2
-    #pragma hls array_partition variable=local_tOut cyclic factor=6 dim=3
+    #pragma hls array_partition variable=local_tOut cyclic factor=8 dim=3
 
     ITERATION_LOOP:
     for (int iter = 0; iter < NUMITER/2; iter++) {
